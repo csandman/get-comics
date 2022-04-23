@@ -1,61 +1,16 @@
 import { createWriteStream, existsSync } from "fs";
 import path from "path";
-import { URL } from "url";
 import { File } from "megajs";
 import fetch from "node-fetch";
 import { extract as getZippyshareLink } from "zs-extract";
 import getProgressBar from "./get-progress-bar";
 import { getMediafireLink } from "./mediafire";
-import type { Response } from "node-fetch";
-
-export async function getRedirectLocation(url: string) {
-  if (url.startsWith("https://getcomics.info/links.php")) {
-    const redirectRes = await fetch(url, {
-      method: "HEAD",
-      redirect: "manual",
-    });
-    const redirectUrl = redirectRes.headers.get("location");
-    return redirectUrl || "";
-  }
-
-  return url;
-}
-
-function getFilenameFromContentDisposition(res: Response) {
-  let filename = "";
-
-  const disposition = res.headers.get("content-disposition") as string;
-
-  if (disposition?.includes("attachment")) {
-    const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-    const matches = filenameRegex.exec(disposition);
-    if (matches?.[1]) {
-      filename = matches[1].replace(/['"]/g, "");
-      filename = decodeURIComponent(filename);
-      filename = filename.replace(/^UTF-8/i, "").trim();
-    }
-  }
-
-  return filename;
-}
+import { checkIsHost, getFilenameFromContentDisposition } from "./requests";
 
 // const MAIN_SERVER_HOST = "comicfiles.ru";
 const ZIPPYSHARE_HOST = "zippyshare.com";
 const MEDIAFIRE_HOST = "mediafire.com";
 const MEGA_HOST = "mega.nz";
-
-function checkIsHost(urlStr: string, host: string) {
-  try {
-    const url = new URL(urlStr);
-    if (url.host.toLowerCase().includes(host)) {
-      return true;
-    }
-  } catch (err) {
-    console.warn("Error checking host:\n", (err as Error).message);
-  }
-
-  return false;
-}
 
 async function getDownloadParts(downloadUrl: string) {
   let fileName: string;
@@ -106,13 +61,8 @@ async function getDownloadParts(downloadUrl: string) {
 }
 
 async function downloadComic(comicUrl: string, outputPath: string) {
-  const downloadUrl = await getRedirectLocation(comicUrl);
-  if (!downloadUrl) {
-    throw new Error("No redirect url found");
-  }
-
   const { fileName, fileSize, downloadStream } = await getDownloadParts(
-    downloadUrl
+    comicUrl
   );
 
   console.log("Downloading Comic:", fileName);

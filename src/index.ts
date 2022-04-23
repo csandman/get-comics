@@ -1,9 +1,14 @@
+import { writeFile } from "fs/promises";
+import path from "path";
 import mkdirp from "mkdirp";
+import { getDateTime } from "./utils/date";
 import downloadComic from "./utils/download-comic";
 import loadPage from "./utils/load-page";
+import { getRedirectLocation } from "./utils/requests";
 
-interface FullLink {
+interface ComicLink {
   title: string;
+  pageUrl: string;
   links: {
     main?: string;
     mirror?: string;
@@ -15,7 +20,7 @@ interface FullLink {
   };
 }
 
-const fullLinks: FullLink[] = [];
+const fullLinks: ComicLink[] = [];
 
 async function parseDownloadLinks(url: string) {
   console.log("Parsing download links from comic page at URL:", url);
@@ -34,8 +39,9 @@ async function parseDownloadLinks(url: string) {
     const ufile = page('a[title="UFILE"]').attr("href");
     const dropapk = page('a[title="DropAPK"]').attr("href");
 
-    const newDownload: FullLink = {
+    const newDownload: ComicLink = {
       title,
+      pageUrl: url,
       links: {
         main: mainDownloadLink,
         ...(mirror && { mirror }),
@@ -98,8 +104,9 @@ async function parseDownloadLinks(url: string) {
         ).length > 0;
 
       if (hasDownloadLink) {
-        const newDownload = {
+        const newDownload: ComicLink = {
           title,
+          pageUrl: url,
           links: {
             ...(main && { main }),
             ...(mirror && { mirror }),
@@ -226,10 +233,6 @@ async function getComics(opts: Partial<GetComicsOptions>) {
     ...opts,
   };
 
-  if (options.pages < 1) {
-    options.pages = 1;
-  }
-
   await mkdirp(options.output);
 
   let baseUrl = BASE_URL;
@@ -261,10 +264,40 @@ async function getComics(opts: Partial<GetComicsOptions>) {
 
   console.log(fullLinks);
 
-  for (let i = 0; i < fullLinks.length; i += 1) {
+  const fullRedirectedLinks = await Promise.all(
+    fullLinks.map(
+      async ({
+        title,
+        pageUrl,
+        links: { main, mirror, mega, mediafire, zippyshare, dropapk, ufile },
+      }) => ({
+        title,
+        pageUrl,
+        links: {
+          ...(main && { main: await getRedirectLocation(main) }),
+          ...(mirror && { mirror: await getRedirectLocation(mirror) }),
+          ...(mega && { mega: await getRedirectLocation(mega) }),
+          ...(mediafire && { mediafire: await getRedirectLocation(mediafire) }),
+          ...(zippyshare && {
+            zippyshare: await getRedirectLocation(zippyshare),
+          }),
+          ...(dropapk && { dropapk: await getRedirectLocation(dropapk) }),
+          ...(ufile && { ufile: await getRedirectLocation(ufile) }),
+        },
+      })
+    )
+  );
+
+  if (options.saveLinks) {
+    const linkFileName = `links_${getDateTime()}.json`;
+    const linkFilePath = path.join(options.output, linkFileName);
+    await writeFile(linkFilePath, JSON.stringify(fullRedirectedLinks, null, 2));
+  }
+
+  for (let i = 0; i < fullRedirectedLinks.length; i += 1) {
     const {
       links: { main, mirror, mega, mediafire, zippyshare },
-    } = fullLinks[i];
+    } = fullRedirectedLinks[i];
 
     let success = false;
 

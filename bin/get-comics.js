@@ -37,7 +37,7 @@ const basicOptions = [
 const selectionOptions = [
   {
     name: "pages",
-    alias: "n",
+    alias: "p",
     description:
       "The total number of pages to download, starting from the most recently uploaded.\nIf you pass 0, all available pages will be downloaded.\n",
     type: Number,
@@ -114,7 +114,5 @@ if (help) {
 
   console.log(usage);
 } else {
-  console.log(options);
-
   getComics(options);
 }
