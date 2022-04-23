@@ -33,9 +33,12 @@
     "cli-progress": "^3.10.0",
     "command-line-args": "^5.2.1",
     "command-line-usage": "^6.1.3",
+    "filehost-meta": "^1.1.3",
+    "megajs": "^1.0.3",
     "mkdirp": "^1.0.4",
     "node-fetch": "^3.2.3",
-    "pretty-bytes": "^6.0.0"
+    "pretty-bytes": "^6.0.0",
+    "zs-extract": "^1.4.1"
   },
   "devDependencies": {
     "@types/cli-progress": "^3.9.2",

@@ -46,7 +46,8 @@
         "prefer": "type-imports",
         "disallowTypeAnnotations": true
       }
-    ]
+    ],
+    "@typescript-eslint/ban-ts-comment": "off"
   },
   "overrides": [
     {
