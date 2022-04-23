@@ -9,7 +9,7 @@
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
     "allowJs": true,
-    "noImplicitAny": true
+    "strict": true
   },
   "include": ["src/**/*.ts", "**/*.js"],
   "lib": ["es2015"]

@@ -1,72 +1,26 @@
-import fetch from 'node-fetch';
-import { load as loadPage } from 'cheerio';
-import { createWriteStream } from 'fs';
-import cliProgress from 'cli-progress';
-import prettyBytes from 'pretty-bytes';
+import mkdirp from "mkdirp";
+import downloadComic from "./utils/download-comic";
+import loadPage from "./utils/load-page";
 
 const downloadLinks = new Set<string>();
 
-async function downloadComic(comicUrl: string, outputPath: string) {
-  const redirectRes = await fetch(comicUrl, {
-    method: 'HEAD',
-    redirect: 'manual',
-  });
-  const redirectUrl = redirectRes.headers.get('location');
-  const fileName = redirectUrl.split('/').pop();
-  const cleanFileName = decodeURIComponent(fileName);
-  console.log('\nDownloading Comic:', cleanFileName);
+async function parseDownloadLinks(url: string) {
+  console.log("Parsing download link from page at URL:", url);
 
-  const res = await fetch(redirectUrl);
-  const outputFilePath = `${outputPath}/${cleanFileName}`;
-  const fileStream = createWriteStream(outputFilePath);
+  const page = await loadPage(url);
 
-  const progressBar = new cliProgress.SingleBar(
-    {
-      format: '[{bar}] {percentage}% | {value} / {total}',
-      formatValue: (value, opts, type) =>
-        ['total', 'value'].includes(type)
-          ? prettyBytes(value)
-          : value.toString(),
-    },
-    cliProgress.Presets.shades_classic
-  );
-  progressBar.start(Number(res.headers.get('content-length')), 0);
-  let totalBytes = 0;
-
-  await new Promise<void>((resolve, reject) => {
-    res.body.pipe(fileStream);
-    res.body.on('error', reject);
-    res.body.on('data', (chunk) => {
-      totalBytes += chunk.length;
-      progressBar.update(totalBytes);
-    });
-    fileStream.on('finish', () => {
-      progressBar.stop();
-      console.log('Finished downloading comic:', outputFilePath);
-      resolve();
-    });
-  });
-}
-
-async function parseDownloadLink(url: string) {
-  console.log('Parsing download link from page at URL:', url);
-
-  const res = await fetch(url);
-  const data = await res.text();
-  const page = loadPage(data);
-
-  const mainDownloadLink = page('a[title="Download Now"]').attr('href');
+  const mainDownloadLink = page('a[title="Download Now"]').attr("href");
 
   if (mainDownloadLink) {
     // const title = page('section.post-contents h2').text();
     // console.log(title);
     downloadLinks.add(mainDownloadLink);
   } else {
-    page('a[rel="noopener noreferrer"]').each((i, anchorSel) => {
+    page("section.post-contents a").each((i, anchorSel) => {
       const anchor = page(anchorSel);
       const anchorText = anchor.text().trim();
-      if (anchorText === 'Main Server') {
-        const downloadLink = anchor.attr('href') as string;
+      if (anchorText === "Main Server") {
+        const downloadLink = anchor.attr("href") as string;
         downloadLinks.add(downloadLink);
       }
     });
@@ -74,55 +28,51 @@ async function parseDownloadLink(url: string) {
 }
 
 async function parseWeekPage(url: string) {
-  console.log('Parsing week page at URL:', url);
+  console.log("Parsing week page at URL:", url);
 
-  const res = await fetch(url);
-  const data = await res.text();
-  const page = loadPage(data);
+  const page = await loadPage(url);
 
   const comicPageUrls: string[] = [];
   page('a[rel="noopener noreferrer"]').each((i, anchorSel) => {
     const anchor = page(anchorSel);
-    comicPageUrls.push(anchor.attr('href') as string);
+    comicPageUrls.push(anchor.attr("href") as string);
   });
 
   for (let i = 0; i < comicPageUrls.length; i += 1) {
-    await parseDownloadLink(comicPageUrls[i]);
+    await parseDownloadLinks(comicPageUrls[i]);
   }
 }
 
 async function parseIndexPage(url: string) {
-  console.log('Parsing index page at URL:', url);
+  console.log("Parsing index page at URL:", url);
 
-  const res = await fetch(url);
-  const data = await res.text();
-  const page = loadPage(data);
+  const page = await loadPage(url);
 
   const comicPageUrls: string[] = [];
 
-  page('h1.post-title a').each((i, comicPageLinkSel) => {
+  page("h1.post-title a").each((i, comicPageLinkSel) => {
     const comicPageLink = page(comicPageLinkSel);
-    comicPageUrls.push(comicPageLink.attr('href') as string);
+    comicPageUrls.push(comicPageLink.attr("href") as string);
   });
 
   for (let i = 0; i < comicPageUrls.length; i += 1) {
     const comicPageUrl = comicPageUrls[i];
 
-    if (comicPageUrl.includes('week')) {
+    if (comicPageUrl.includes("week")) {
       await parseWeekPage(comicPageUrl);
     } else {
-      await parseDownloadLink(comicPageUrl);
+      await parseDownloadLinks(comicPageUrl);
     }
   }
 
-  const hasNextPage = !!page('a.pagination-older').text();
+  const hasNextPage = !!page("a.pagination-older").text();
   if (!hasNextPage) {
-    console.log('No more pages left, stopping');
+    console.log("No more pages left, stopping");
   }
   return hasNextPage;
 }
 
-const BASE_URL = 'https://getcomics.info';
+const BASE_URL = "https://getcomics.info";
 
 interface GetComicsOptions {
   /**
@@ -130,7 +80,7 @@ interface GetComicsOptions {
    *
    * @defaultValue `process.cwd()`
    */
-  output?: string;
+  output: string;
 
   /**
    * The number of pages to download comics for.
@@ -139,7 +89,7 @@ interface GetComicsOptions {
    *
    * @defaultValue `1`
    */
-  pages?: number;
+  pages: number;
 
   /**
    * A tag to use as the starting point for the downloads.
@@ -157,18 +107,20 @@ interface GetComicsOptions {
   category?: string;
 }
 
+type GetComicsOptionsParam = Partial<GetComicsOptions>;
+
 const DEFAULT_OPTIONS: GetComicsOptions = {
   pages: 1,
   output: process.cwd(),
 };
 
-async function getComics(opts: GetComicsOptions) {
+async function getComics(opts: GetComicsOptionsParam) {
   const options: GetComicsOptions = {
     ...DEFAULT_OPTIONS,
     ...opts,
   };
 
-  console.log('OPTIONS', options);
+  await mkdirp(options.output);
 
   let baseUrl = BASE_URL;
   if (options.tag) {
@@ -177,7 +129,7 @@ async function getComics(opts: GetComicsOptions) {
     baseUrl = `${baseUrl}/tag/${options.category}`;
   }
 
-  let queryStr = '';
+  let queryStr = "";
   if (options.query) {
     queryStr = `?s=${encodeURIComponent(options.query)}`;
   }
@@ -199,7 +151,7 @@ async function getComics(opts: GetComicsOptions) {
     await downloadComic(downloadLinksArr[i], options.output);
   }
 
-  console.log('\nFinished downloading all comics!');
+  console.log("\nFinished downloading all comics!");
 }
 
 export default getComics;

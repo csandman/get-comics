@@ -21,6 +21,39 @@
     "curly": ["error", "all"],
     "import/prefer-default-export": "off",
     "no-console": "off",
-    "no-await-in-loop": "off"
-  }
+    "no-await-in-loop": "off",
+    "import/order": [
+      "error",
+      {
+        "groups": [
+          "builtin",
+          "external",
+          "internal",
+          ["parent", "sibling"],
+          "object",
+          "type"
+        ],
+        "newlines-between": "never",
+        "alphabetize": {
+          "order": "asc",
+          "caseInsensitive": false
+        }
+      }
+    ],
+    "@typescript-eslint/consistent-type-imports": [
+      "warn",
+      {
+        "prefer": "type-imports",
+        "disallowTypeAnnotations": true
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["bin/**/*.js"],
+      "rules": {
+        "import/extensions": ["error", "always"]
+      }
+    }
+  ]
 }
