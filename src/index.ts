@@ -8,22 +8,7 @@ import downloadComic from "./utils/download-comic";
 import loadPage from "./utils/load-page";
 import { getRedirectLocation } from "./utils/requests";
 import { prefixHttps, urlExists } from "./utils/url";
-
-interface ComicLink {
-  title: string;
-  pageUrl: string;
-  links: {
-    main?: string;
-    mirror?: string;
-    mega?: string;
-    mediafire?: string;
-    zippyshare?: string;
-    ufile?: string;
-    dropapk?: string;
-    cloudmail?: string;
-    userscloud?: string;
-  };
-}
+import type { GetComicsOptions, ComicLink } from "./types";
 
 const fullLinks: ComicLink[] = [];
 
@@ -187,78 +172,6 @@ async function parseIndexPage(url: string) {
 
 const BASE_URL = "https://getcomics.info";
 
-interface GetComicsOptions {
-  /**
-   * The directory to store the downloaded comics in.
-   *
-   * @defaultValue `process.cwd()`
-   */
-  output: string;
-
-  /**
-   * The number of pages to download comics for.
-   *
-   * Pass `0` to download all available pages.
-   *
-   * @defaultValue `1`
-   */
-  pages: number;
-
-  /**
-   * The page to start parsing comic links on.
-   *
-   * @defaultValue `1`
-   */
-  start: number;
-
-  /**
-   * If passed, new comics with the same filenames will overwrite existing files with the same names.
-   */
-  overwrite?: boolean;
-
-  /**
-   * When passed, a file named links_<DateTime>.json will be saved in the same directory as the downloaded comics.
-   */
-  saveLinks?: boolean;
-
-  /**
-   * A specific GetComics download page URL to download comics from.
-   *
-   * @example
-   *
-   * ```sh
-   * "https://getcomics.info/other-comics/gideon-falls-deluxe-edition-book-1-the-legend-of-the-black-barn-2021/"
-   * ```
-   */
-  url?: string;
-
-  /**
-   * A tag to use as the starting point for the downloads.
-   *
-   * @example
-   * ```sh
-   * "the-walking-dead"
-   * "superman"
-   * ```
-   */
-  tag?: string;
-
-  /**
-   * A search query to use for downloading
-   *
-   * @example
-   * ```sh
-   * "Donald Duck"
-   * ```
-   */
-  query?: string;
-
-  /**
-   * A GetComics category to use for downloading (will be overridden by tag)
-   */
-  category?: string;
-}
-
 const DEFAULT_OPTIONS: GetComicsOptions = {
   pages: 1,
   start: 1,
@@ -360,7 +273,7 @@ async function getComics(opts: Partial<GetComicsOptions>) {
     if (!success && zippyshare) {
       try {
         console.log("\nAttempting download from ZippyShare");
-        fileName = await downloadComic(zippyshare, options.output);
+        fileName = await downloadComic(zippyshare, options);
         success = true;
       } catch (err) {
         console.error(
@@ -373,7 +286,7 @@ async function getComics(opts: Partial<GetComicsOptions>) {
     if (!success && mediafire) {
       try {
         console.log("\nAttempting download from MediaFire");
-        fileName = await downloadComic(mediafire, options.output);
+        fileName = await downloadComic(mediafire, options);
         success = true;
       } catch (err) {
         console.error(
@@ -386,7 +299,7 @@ async function getComics(opts: Partial<GetComicsOptions>) {
     if (!success && mega) {
       try {
         console.log("\nAttempting download from mega.nz");
-        fileName = await downloadComic(mega, options.output);
+        fileName = await downloadComic(mega, options);
         success = true;
       } catch (err) {
         console.error(
@@ -399,7 +312,7 @@ async function getComics(opts: Partial<GetComicsOptions>) {
     if (!success && main) {
       try {
         console.log("\nAttempting download from GetComics' main servers");
-        fileName = await downloadComic(main, options.output);
+        fileName = await downloadComic(main, options);
         success = true;
       } catch (err) {
         console.error(
@@ -412,7 +325,7 @@ async function getComics(opts: Partial<GetComicsOptions>) {
     if (!success && mirror) {
       try {
         console.log("\nAttempting download from GetComics' mirror servers");
-        fileName = await downloadComic(mirror, options.output);
+        fileName = await downloadComic(mirror, options);
         success = true;
       } catch (err) {
         console.error(
@@ -422,7 +335,7 @@ async function getComics(opts: Partial<GetComicsOptions>) {
       }
     }
 
-    if (fileName && /\.zip$/i.test(fileName)) {
+    if (!options.noExtract && fileName && /\.zip$/i.test(fileName)) {
       try {
         console.log(
           "The comics for this download are in a .zip archive, attempting to extract"

@@ -29,8 +29,13 @@ const basicOptions = [
     name: "save-links",
     alias: "l",
     description:
-      "When passed, a file named links_<DateTime>.json will be saved in the same directory as the downloaded comics",
+      "When passed, a file named links_<DateTime>.json will be saved in the same directory as the downloaded comics.\n",
     type: Boolean,
+  },
+  {
+    name: "no-extract",
+    description:
+      "By default any .zip archives containing a collection of comics will be extracted and the archive file will be removed. If this option is passed, the archive file will be left as is.",
   },
 ];
 

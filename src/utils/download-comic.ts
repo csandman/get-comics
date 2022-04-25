@@ -6,6 +6,7 @@ import { extract as getZippyshareLink } from "zs-extract";
 import getProgressBar from "./get-progress-bar";
 import { getMediafireLink } from "./mediafire";
 import { checkIsHost, getFilenameFromContentDisposition } from "./requests";
+import type { GetComicsOptions } from "../types";
 
 // const MAIN_SERVER_HOST = "comicfiles.ru";
 const ZIPPYSHARE_HOST = "zippyshare.com";
@@ -60,7 +61,7 @@ async function getDownloadParts(downloadUrl: string) {
   return { fileName, fileSize, downloadStream };
 }
 
-async function downloadComic(comicUrl: string, outputPath: string) {
+async function downloadComic(comicUrl: string, options: GetComicsOptions) {
   const { fileName, fileSize, downloadStream } = await getDownloadParts(
     comicUrl
   );
@@ -69,10 +70,14 @@ async function downloadComic(comicUrl: string, outputPath: string) {
 
   const resSize = Number(fileSize);
 
-  const outputFilePath = path.join(outputPath, fileName);
+  const outputFilePath = path.join(options.output, fileName);
   if (existsSync(outputFilePath)) {
-    console.log("Comic file already exists, skipping");
-    return "";
+    if (options.overwrite) {
+      console.log("Comic file already exists, overwriting");
+    } else {
+      console.log("Comic file already exists, skipping download");
+      return "";
+    }
   }
 
   const fileStream = createWriteStream(outputFilePath);
