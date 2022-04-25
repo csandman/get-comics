@@ -29,6 +29,7 @@
   },
   "types": "./dist/index.d.ts",
   "dependencies": {
+    "chalk": "^5.0.1",
     "cheerio": "^1.0.0-rc.10",
     "cli-progress": "^3.10.0",
     "command-line-args": "^5.2.1",

@@ -9,6 +9,7 @@ import {
   checkIsHost,
   getFilenameFromContentDisposition,
 } from "./utils/requests";
+import { styledMediaFire, styledZippyShare } from "./utils/styling";
 import type { GetComicsOptions } from "./types";
 
 // const MAIN_SERVER_HOST = "comicfiles.ru";
@@ -35,13 +36,13 @@ async function getDownloadParts(downloadUrl: string) {
     if (checkIsHost(downloadUrl, MEDIAFIRE_HOST)) {
       const mediafireUrl = await getMediafireLink(downloadUrl);
       if (!mediafireUrl) {
-        throw new Error("No MediaFire download available");
+        throw new Error(`No ${styledMediaFire} download available`);
       }
       realDownloadUrl = mediafireUrl;
     } else if (checkIsHost(downloadUrl, ZIPPYSHARE_HOST)) {
       const zippyUrl = await getZippyshareLink(downloadUrl);
       if (!zippyUrl?.download) {
-        throw new Error("No ZippyShare download available");
+        throw new Error(`No ${styledZippyShare} download available`);
       }
       realDownloadUrl = zippyUrl.download;
     }

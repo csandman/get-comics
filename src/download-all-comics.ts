@@ -2,6 +2,12 @@ import path from "path";
 import rimraf from "rimraf";
 import downloadComic from "./download-comic";
 import { extractZip } from "./utils/archive";
+import {
+  styledGetComics,
+  styledMediaFire,
+  styledMega,
+  styledZippyShare,
+} from "./utils/styling";
 import type { GetComicsOptions, ComicLink } from "./types";
 
 async function downloadAllComics(
@@ -19,12 +25,12 @@ async function downloadAllComics(
 
     if (!success && zippyshare) {
       try {
-        console.log("\nAttempting download from ZippyShare");
+        console.log(`\nAttempting download from ${styledZippyShare}`);
         fileName = await downloadComic(zippyshare, options);
         success = true;
       } catch (err) {
         console.error(
-          "Error downloading from MediaFire:\n",
+          `Error downloading from ${styledZippyShare}:\n`,
           (err as Error).message
         );
       }
@@ -32,12 +38,12 @@ async function downloadAllComics(
 
     if (!success && mediafire) {
       try {
-        console.log("\nAttempting download from MediaFire");
+        console.log(`\nAttempting download from ${styledMediaFire}`);
         fileName = await downloadComic(mediafire, options);
         success = true;
       } catch (err) {
         console.error(
-          "Error downloading from MediaFire:\n",
+          `Error downloading from ${styledMediaFire}:\n`,
           (err as Error).message
         );
       }
@@ -45,12 +51,12 @@ async function downloadAllComics(
 
     if (!success && mega) {
       try {
-        console.log("\nAttempting download from mega.nz");
+        console.log(`\nAttempting download from ${styledMega}`);
         fileName = await downloadComic(mega, options);
         success = true;
       } catch (err) {
         console.error(
-          "Error downloading from Mega.nz:\n",
+          `Error downloading from ${styledMega}:\n`,
           (err as Error).message
         );
       }
@@ -58,12 +64,14 @@ async function downloadAllComics(
 
     if (!success && main) {
       try {
-        console.log("\nAttempting download from GetComics' main servers");
+        console.log(
+          `\nAttempting download from ${styledGetComics}' main server`
+        );
         fileName = await downloadComic(main, options);
         success = true;
       } catch (err) {
         console.error(
-          "Error downloading from MediaFire:\n",
+          `Error downloading from ${styledGetComics}:\n`,
           (err as Error).message
         );
       }
@@ -71,12 +79,14 @@ async function downloadAllComics(
 
     if (!success && mirror) {
       try {
-        console.log("\nAttempting download from GetComics' mirror servers");
+        console.log(
+          `\nAttempting download from ${styledGetComics}' mirror server`
+        );
         fileName = await downloadComic(mirror, options);
         success = true;
       } catch (err) {
         console.error(
-          "Error downloading from MediaFire:\n",
+          `Error downloading from ${styledGetComics} mirror:\n`,
           (err as Error).message
         );
       }

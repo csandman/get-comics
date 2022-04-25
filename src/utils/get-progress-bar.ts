@@ -1,10 +1,11 @@
+import chalk from "chalk";
 import cliProgress from "cli-progress";
 import prettyBytes from "pretty-bytes";
 
 function getProgressBar(total: number | string) {
   const progressBar = new cliProgress.SingleBar(
     {
-      format: "[{bar}] {percentage}% | {value} / {total}",
+      format: `${chalk.cyan("{bar}")}  {percentage}%  |  {value} / {total}`,
       formatValue: (value, opts, type) =>
         ["total", "value"].includes(type)
           ? prettyBytes(value, { minimumFractionDigits: 2 })
