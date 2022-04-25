@@ -18,6 +18,8 @@ interface ComicLink {
     zippyshare?: string;
     ufile?: string;
     dropapk?: string;
+    cloudmail?: string;
+    userscloud?: string;
   };
 }
 
@@ -75,16 +77,17 @@ async function parseDownloadLinks(url: string) {
       let zippyshare = "";
       let dropapk = "";
       let ufile = "";
+      let cloudmail = "";
 
       page("a", li).each((ii, anchorSel) => {
         const anchor = page(anchorSel);
 
         const downloadUrl = anchor.attr("href") as string;
-        const anchorText = anchor.text().trim().toLowerCase();
+        const anchorText = anchor.text().toLowerCase().replace(/\s/g, "");
 
-        if (anchorText === "main server") {
+        if (anchorText === "mainserver" || anchorText === "link1") {
           main = downloadUrl;
-        } else if (anchorText.includes("mirror")) {
+        } else if (anchorText.includes("mirror") || anchorText === "link2") {
           mirror = downloadUrl;
         } else if (anchorText === "mega") {
           mega = downloadUrl;
@@ -96,13 +99,22 @@ async function parseDownloadLinks(url: string) {
           dropapk = downloadUrl;
         } else if (anchorText === "ufile") {
           ufile = downloadUrl;
+        } else if (anchorText === "cloudmail") {
+          cloudmail = downloadUrl;
         }
       });
 
       const hasDownloadLink =
-        [main, mirror, mega, mediafire, zippyshare, dropapk, ufile].filter(
-          Boolean
-        ).length > 0;
+        [
+          main,
+          mirror,
+          mega,
+          mediafire,
+          zippyshare,
+          dropapk,
+          ufile,
+          cloudmail,
+        ].filter(Boolean).length > 0;
 
       if (hasDownloadLink) {
         const newDownload: ComicLink = {
@@ -116,6 +128,7 @@ async function parseDownloadLinks(url: string) {
             ...(zippyshare && { zippyshare }),
             ...(dropapk && { dropapk }),
             ...(ufile && { ufile }),
+            ...(cloudmail && { cloudmail }),
           },
         };
 
