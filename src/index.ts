@@ -1,6 +1,8 @@
 import { writeFile } from "fs/promises";
 import path from "path";
 import mkdirp from "mkdirp";
+import rimraf from "rimraf";
+import { extractZip } from "./utils/archive";
 import { getDateTime } from "./utils/date";
 import downloadComic from "./utils/download-comic";
 import loadPage from "./utils/load-page";
@@ -314,8 +316,6 @@ async function getComics(opts: Partial<GetComicsOptions>) {
     }
   }
 
-  console.log(fullLinks);
-
   const fullRedirectedLinks = await Promise.all(
     fullLinks.map(
       async ({
@@ -340,6 +340,8 @@ async function getComics(opts: Partial<GetComicsOptions>) {
     )
   );
 
+  console.log(fullRedirectedLinks);
+
   if (options.saveLinks) {
     const linkFileName = `links_${getDateTime()}.json`;
     const linkFilePath = path.join(options.output, linkFileName);
@@ -353,10 +355,12 @@ async function getComics(opts: Partial<GetComicsOptions>) {
 
     let success = false;
 
+    let fileName = "";
+
     if (!success && zippyshare) {
       try {
         console.log("\nAttempting download from ZippyShare");
-        await downloadComic(zippyshare, options.output);
+        fileName = await downloadComic(zippyshare, options.output);
         success = true;
       } catch (err) {
         console.error(
@@ -369,7 +373,7 @@ async function getComics(opts: Partial<GetComicsOptions>) {
     if (!success && mediafire) {
       try {
         console.log("\nAttempting download from MediaFire");
-        await downloadComic(mediafire, options.output);
+        fileName = await downloadComic(mediafire, options.output);
         success = true;
       } catch (err) {
         console.error(
@@ -382,7 +386,7 @@ async function getComics(opts: Partial<GetComicsOptions>) {
     if (!success && mega) {
       try {
         console.log("\nAttempting download from mega.nz");
-        await downloadComic(mega, options.output);
+        fileName = await downloadComic(mega, options.output);
         success = true;
       } catch (err) {
         console.error(
@@ -395,7 +399,7 @@ async function getComics(opts: Partial<GetComicsOptions>) {
     if (!success && main) {
       try {
         console.log("\nAttempting download from GetComics' main servers");
-        await downloadComic(main, options.output);
+        fileName = await downloadComic(main, options.output);
         success = true;
       } catch (err) {
         console.error(
@@ -408,13 +412,29 @@ async function getComics(opts: Partial<GetComicsOptions>) {
     if (!success && mirror) {
       try {
         console.log("\nAttempting download from GetComics' mirror servers");
-        await downloadComic(mirror, options.output);
+        fileName = await downloadComic(mirror, options.output);
         success = true;
       } catch (err) {
         console.error(
           "Error downloading from MediaFire:\n",
           (err as Error).message
         );
+      }
+    }
+
+    if (fileName && /\.zip$/i.test(fileName)) {
+      try {
+        console.log(
+          "The comics for this download are in a .zip archive, attempting to extract"
+        );
+        const filePath = path.join(options.output, fileName);
+        await extractZip(filePath, options.output);
+
+        console.log("Finished extracting archive, deleting .zip file");
+        rimraf.sync(filePath, { glob: false });
+      } catch (err) {
+        console.error("Error extracting zip archive:");
+        console.error((err as Error).message);
       }
     }
   }

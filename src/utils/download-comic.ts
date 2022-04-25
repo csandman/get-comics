@@ -31,13 +31,13 @@ async function getDownloadParts(downloadUrl: string) {
     if (checkIsHost(downloadUrl, MEDIAFIRE_HOST)) {
       const mediafireUrl = await getMediafireLink(downloadUrl);
       if (!mediafireUrl) {
-        throw new Error("No MediaFire link available");
+        throw new Error("No MediaFire download available");
       }
       realDownloadUrl = mediafireUrl;
     } else if (checkIsHost(downloadUrl, ZIPPYSHARE_HOST)) {
       const zippyUrl = await getZippyshareLink(downloadUrl);
       if (!zippyUrl?.download) {
-        throw new Error("No ZippyShare link available");
+        throw new Error("No ZippyShare download available");
       }
       realDownloadUrl = zippyUrl.download;
     }
@@ -72,7 +72,7 @@ async function downloadComic(comicUrl: string, outputPath: string) {
   const outputFilePath = path.join(outputPath, fileName);
   if (existsSync(outputFilePath)) {
     console.log("Comic file already exists, skipping");
-    return;
+    return "";
   }
 
   const fileStream = createWriteStream(outputFilePath);
@@ -93,6 +93,8 @@ async function downloadComic(comicUrl: string, outputPath: string) {
       resolve();
     });
   });
+
+  return fileName;
 }
 
 export default downloadComic;

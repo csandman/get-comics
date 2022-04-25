@@ -7,7 +7,7 @@ function getProgressBar(total: number | string) {
       format: "[{bar}] {percentage}% | {value} / {total}",
       formatValue: (value, opts, type) =>
         ["total", "value"].includes(type)
-          ? prettyBytes(value)
+          ? prettyBytes(value, { minimumFractionDigits: 2 })
           : value.toString(),
     },
     cliProgress.Presets.shades_classic
