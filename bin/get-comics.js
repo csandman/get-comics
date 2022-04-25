@@ -36,6 +36,7 @@ const basicOptions = [
     name: "no-extract",
     description:
       "By default any .zip archives containing a collection of comics will be extracted and the archive file will be removed. If this option is passed, the archive file will be left as is.",
+    type: Boolean,
   },
 ];
 

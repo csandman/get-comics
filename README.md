@@ -28,15 +28,34 @@ You can filter which comics you'd like to download and determine how many pages 
 ```
 Basic Options
 
-  -h, --help              Display this usage guide.
+  -h, --help            Display this usage guide.
 
-  -o, --output <string>   The location to store the resulting files in.
-                          Defaults to the current directory.
+  -o, --output <string> The location to store the resulting files in.
+                        Defaults to the current directory.
 
-  -p, --pages <number>    The total number of pages to download, starting from the most recent
-                          If you pass 0, all available pages will be downloaded.
+  -w, --overwrite       If passed, new comics with the same filenames will overwrite existing files
+                        with the same names.
+
+  -l, --save-links      When passed, a file named links_<DateTime>.json will be saved in the same
+                        directory as the downloaded comics.
+
+  --no-extract          By default any .zip archives containing a collection of comics will be
+                        extracted and the archive file will be removed. If this option is passed, the
+                        archive file will be left as is.
+
+Selection Options
+
+  -p, --pages <number> The total number of pages to download, starting from the most recently
+                       uploaded.
+                       If you pass 0, all available pages will be downloaded.
+
+  -s, --start <number> The page to start parsing comic links on.
 
 Filter Options
+
+  -u, --url <string>      A specific GetComics page URL to download all comics from.
+                          ex. https://getcomics.info/other-comics/gideon-falls-deluxe-edition-book-1-
+                          the-legend-of-the-black-barn-2021/
 
   -q, --query <string>    A search query to filter comics with.
                           ex. "Donald Duck"
@@ -68,4 +87,29 @@ Download the most recent page of comics tagged with "the-walking-dead":
 
 ```sh
 get-comics --tag the-walking-dead
+```
+
+## Package usage
+
+In order to use this package in your own node apps, you can install it and use it like this:
+
+```sh
+npm install get-comics
+```
+
+```js
+import getComics from "get-comics";
+
+async function downloadAllComics() {
+  await getComics({
+    pages: 3,
+    tag: "superman",
+    noExtract: true,
+    saveLinks: true,
+  });
+
+  console.log("Finished downloading comics");
+}
+
+downloadAllComics();
 ```
