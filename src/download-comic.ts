@@ -3,10 +3,13 @@ import path from "path";
 import { File } from "megajs";
 import fetch from "node-fetch";
 import { extract as getZippyshareLink } from "zs-extract";
-import getProgressBar from "./get-progress-bar";
-import { getMediafireLink } from "./mediafire";
-import { checkIsHost, getFilenameFromContentDisposition } from "./requests";
-import type { GetComicsOptions } from "../types";
+import getProgressBar from "./utils/get-progress-bar";
+import { getMediafireLink } from "./utils/mediafire";
+import {
+  checkIsHost,
+  getFilenameFromContentDisposition,
+} from "./utils/requests";
+import type { GetComicsOptions } from "./types";
 
 // const MAIN_SERVER_HOST = "comicfiles.ru";
 const ZIPPYSHARE_HOST = "zippyshare.com";

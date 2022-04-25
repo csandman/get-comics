@@ -63,7 +63,7 @@ const filterOptions = [
     name: "url",
     alias: "u",
     description:
-      "A specific GetComics page URL to download all comics from.\nex. https://getcomics.info/other-comics/gideon-falls-deluxe-edition-book-1-the-legend-of-the-black-barn-2021/\n",
+      "A specific GetComics page URL to download all comics from. If this option is passed, most other selection options will be ignored.\nex. https://getcomics.info/other-comics/gideon-falls-deluxe-edition-book-1-the-legend-of-the-black-barn-2021/\n",
     type: String,
   },
   {
