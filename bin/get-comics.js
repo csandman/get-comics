@@ -54,6 +54,13 @@ const selectionOptions = [
 
 const filterOptions = [
   {
+    name: "url",
+    alias: "u",
+    description:
+      "A specific GetComics page URL to download all comics from.\nex. https://getcomics.info/other-comics/gideon-falls-deluxe-edition-book-1-the-legend-of-the-black-barn-2021/\n",
+    type: String,
+  },
+  {
     name: "query",
     alias: "q",
     description: 'A search query to filter comics with.\nex. "Donald Duck"\n',

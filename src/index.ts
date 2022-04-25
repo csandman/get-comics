@@ -5,6 +5,7 @@ import { getDateTime } from "./utils/date";
 import downloadComic from "./utils/download-comic";
 import loadPage from "./utils/load-page";
 import { getRedirectLocation } from "./utils/requests";
+import { prefixHttps, urlExists } from "./utils/url";
 
 interface ComicLink {
   title: string;
@@ -206,12 +207,34 @@ interface GetComicsOptions {
   saveLinks?: boolean;
 
   /**
+   * A specific GetComics download page URL to download comics from.
+   *
+   * @example
+   *
+   * ```sh
+   * "https://getcomics.info/other-comics/gideon-falls-deluxe-edition-book-1-the-legend-of-the-black-barn-2021/"
+   * ```
+   */
+  url?: string;
+
+  /**
    * A tag to use as the starting point for the downloads.
+   *
+   * @example
+   * ```sh
+   * "the-walking-dead"
+   * "superman"
+   * ```
    */
   tag?: string;
 
   /**
    * A search query to use for downloading
+   *
+   * @example
+   * ```sh
+   * "Donald Duck"
+   * ```
    */
   query?: string;
 
@@ -235,31 +258,47 @@ async function getComics(opts: Partial<GetComicsOptions>) {
 
   await mkdirp(options.output);
 
-  let baseUrl = BASE_URL;
-  if (options.tag) {
-    baseUrl = `${baseUrl}/tag/${options.tag}`;
-  } else if (options.category) {
-    baseUrl = `${baseUrl}/cat/${options.category}`;
-  }
+  if (options.url) {
+    const url = prefixHttps(options.url);
 
-  let queryStr = "";
-  if (options.query) {
-    queryStr = `?s=${encodeURIComponent(options.query)}`;
-  }
+    if (!urlExists(url)) {
+      throw new Error("The value passed for `url` is not a valid URL.");
+    }
 
-  let currPage = options.start;
-  let hasNextPage = true;
+    if (!/https:\/\/getcomics\.info/.test(url)) {
+      throw new Error(
+        "The value passed for `url` is not a valid GetComics URL."
+      );
+    }
 
-  while (
-    hasNextPage &&
-    (currPage <= options.pages + options.start - 1 || options.pages <= 0)
-  ) {
-    const indexUrl =
-      currPage === 0
-        ? `${baseUrl}${queryStr}`
-        : `${baseUrl}/page/${currPage}${queryStr}`;
-    hasNextPage = await parseIndexPage(indexUrl);
-    currPage += 1;
+    await parseDownloadLinks(url);
+  } else {
+    let baseUrl = BASE_URL;
+    if (options.tag) {
+      baseUrl = `${baseUrl}/tag/${options.tag}`;
+    } else if (options.category) {
+      baseUrl = `${baseUrl}/cat/${options.category}`;
+    }
+
+    let queryStr = "";
+    if (options.query) {
+      queryStr = `?s=${encodeURIComponent(options.query)}`;
+    }
+
+    let currPage = options.start;
+    let hasNextPage = true;
+
+    while (
+      hasNextPage &&
+      (currPage <= options.pages + options.start - 1 || options.pages <= 0)
+    ) {
+      const indexUrl =
+        currPage === 0
+          ? `${baseUrl}${queryStr}`
+          : `${baseUrl}/page/${currPage}${queryStr}`;
+      hasNextPage = await parseIndexPage(indexUrl);
+      currPage += 1;
+    }
   }
 
   console.log(fullLinks);
