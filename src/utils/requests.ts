@@ -12,6 +12,19 @@ export async function getRedirectLocation(url: string) {
     return redirectUrl || "";
   }
 
+  if (url.includes("sh.st")) {
+    const redirectRes = await fetch(url, {
+      method: "HEAD",
+      headers: {
+        "User-Agent": "",
+      },
+    });
+
+    const redirectUrl = redirectRes.url;
+
+    return redirectUrl || "";
+  }
+
   return url;
 }
 

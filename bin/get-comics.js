@@ -14,7 +14,7 @@ const basicOptions = [
     name: "output",
     alias: "o",
     description:
-      "The location to store the resulting files in.\nDefaults to the current directory.\n",
+      "The location to store the resulting files in. If the directory does not exist, it will be created.\nDefaults to the current directory.\n",
     type: String,
     defaultValue: process.cwd(),
   },
