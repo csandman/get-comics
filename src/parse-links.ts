@@ -16,12 +16,13 @@ export async function parseDownloadLinks(url: string, links: ComicLink[]) {
   if (mainDownloadLink) {
     const title = page("section.post-contents h2").text().trim();
 
-    const mirror = page('a[title="Mirror Download"]').attr("href");
-    const mega = page('a[title="MEGA"]').attr("href");
-    const mediafire = page('a[title="MEDIAFIRE"]').attr("href");
-    const zippyshare = page('a[title="ZIPPYSHARE"]').attr("href");
-    const ufile = page('a[title="UFILE"]').attr("href");
-    const dropapk = page('a[title="DropAPK"]').attr("href");
+    const mirror = page('a[title*="Mirror Download" i]').attr("href");
+    const mega = page('a[title*="MEGA" i]').attr("href");
+    const mediafire = page('a[title*="MEDIAFIRE" i]').attr("href");
+    const zippyshare = page('a[title*="ZIPPYSHARE" i]').attr("href");
+    const ufile = page('a[title*="UFILE" i]').attr("href");
+    const dropapk = page('a[title*="DropAPK" i]').attr("href");
+    const cloudmail = page('a[title*="CloudMail" i]').attr("href");
 
     const newDownload: ComicLink = {
       title,
@@ -34,6 +35,7 @@ export async function parseDownloadLinks(url: string, links: ComicLink[]) {
         ...(zippyshare && { zippyshare }),
         ...(dropapk && { dropapk }),
         ...(ufile && { ufile }),
+        ...(cloudmail && { cloudmail }),
       },
     };
 
@@ -219,7 +221,16 @@ export async function parseAllLinks(
       async ({
         title,
         pageUrl,
-        links: { main, mirror, mega, mediafire, zippyshare, dropapk, ufile },
+        links: {
+          main,
+          mirror,
+          mega,
+          mediafire,
+          zippyshare,
+          dropapk,
+          ufile,
+          cloudmail,
+        },
       }) => ({
         title,
         pageUrl,
@@ -233,6 +244,7 @@ export async function parseAllLinks(
           }),
           ...(dropapk && { dropapk: await getRedirectLocation(dropapk) }),
           ...(ufile && { ufile: await getRedirectLocation(ufile) }),
+          ...(cloudmail && { cloudmail: await getRedirectLocation(cloudmail) }),
         },
       })
     )
@@ -247,5 +259,6 @@ export async function writeLinksFile(
 ) {
   const linkFileName = `links_${getDateTime()}.json`;
   const linkFilePath = path.join(options.output, linkFileName);
+  console.log(`\nWriting links to file at ${linkFilePath}`);
   await writeFile(linkFilePath, JSON.stringify(links, null, 2));
 }
