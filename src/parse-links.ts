@@ -12,35 +12,102 @@ export async function parseDownloadLinks(url: string, links: ComicLink[]) {
 
   const page = await loadPage(url);
 
-  const mainDownloadLink = page('a[title="Download Now"]').attr("href");
+  // TODO: This part assumes that all single comic download pages have a main server download link which might not always be true
+  const mainDownloadAnchors = page('a[title="Download Now"]');
+  const mainDownloadLink = mainDownloadAnchors.attr("href");
 
+  // This will be true when the page is structured to have only one comic to download
   if (mainDownloadLink) {
-    const title = page("section.post-contents h2").text().trim();
+    // Sometimes the page will have multiple downloads even when structured like this
+    // ex. https://getcomics.info/other-comics/uncle-scrooge-1-404-complete/
+    if (mainDownloadAnchors.length > 1) {
+      console.log("      Multi-comic page detected, parsing all links");
 
-    const mirror = page('a[title*="Mirror Download" i]').attr("href");
-    const mega = page('a[title*="MEGA" i]').attr("href");
-    const mediafire = page('a[title*="MEDIAFIRE" i]').attr("href");
-    const zippyshare = page('a[title*="ZIPPYSHARE" i]').attr("href");
-    const ufile = page('a[title*="UFILE" i]').attr("href");
-    const dropapk = page('a[title*="DropAPK" i]').attr("href");
-    const cloudmail = page('a[title*="CloudMail" i]').attr("href");
+      page("p:empty").remove();
 
-    const newDownload: ComicLink = {
-      title,
-      pageUrl: url,
-      links: {
-        main: mainDownloadLink,
-        ...(mirror && { mirror }),
-        ...(mega && { mega }),
-        ...(mediafire && { mediafire }),
-        ...(zippyshare && { zippyshare }),
-        ...(dropapk && { dropapk }),
-        ...(ufile && { ufile }),
-        ...(cloudmail && { cloudmail }),
-      },
-    };
+      mainDownloadAnchors.each((anchorI, anchorEl) => {
+        const anchor = page(anchorEl);
 
-    links.push(newDownload);
+        const main = anchor.attr("href");
+
+        let buttonContainer = anchor.parent().parent();
+
+        const titleContainer = buttonContainer.prev("p");
+        const title = page("strong", titleContainer).first().text();
+
+        const comicLink: ComicLink = {
+          title,
+          pageUrl: url,
+          links: {
+            main,
+          },
+        };
+
+        let nextElementIsButton = true;
+
+        while (nextElementIsButton) {
+          buttonContainer = buttonContainer.next();
+          const className = buttonContainer.attr("class");
+          if (className === "aio-button-center") {
+            const linkEl = page("a", buttonContainer);
+
+            const downloadUrl = linkEl.attr("href") as string;
+            const linkTitle = (linkEl.attr("title") || "")
+              .toLowerCase()
+              .replace(/\s/g, "");
+
+            if (linkTitle.includes("mirror") || linkTitle.includes("link2")) {
+              comicLink.links.mirror = downloadUrl;
+            } else if (linkTitle.includes("mega")) {
+              comicLink.links.mega = downloadUrl;
+            } else if (linkTitle.includes("mediafire")) {
+              comicLink.links.mediafire = downloadUrl;
+            } else if (linkTitle.includes("zippyshare")) {
+              comicLink.links.zippyshare = downloadUrl;
+            } else if (linkTitle.includes("dropapk")) {
+              comicLink.links.dropapk = downloadUrl;
+            } else if (linkTitle.includes("ufile")) {
+              comicLink.links.ufile = downloadUrl;
+            } else if (linkTitle.includes("cloudmail")) {
+              comicLink.links.cloudmail = downloadUrl;
+            } else if (linkTitle.includes("userscloud")) {
+              comicLink.links.userscloud = downloadUrl;
+            }
+          } else {
+            nextElementIsButton = false;
+          }
+        }
+
+        links.push(comicLink);
+      });
+    } else {
+      const title = page("section.post-contents h2").first().text().trim();
+
+      const mirror = page('a[title*="Mirror Download" i]').attr("href");
+      const mega = page('a[title*="MEGA" i]').attr("href");
+      const mediafire = page('a[title*="MEDIAFIRE" i]').attr("href");
+      const zippyshare = page('a[title*="ZIPPYSHARE" i]').attr("href");
+      const ufile = page('a[title*="UFILE" i]').attr("href");
+      const dropapk = page('a[title*="DropAPK" i]').attr("href");
+      const cloudmail = page('a[title*="CloudMail" i]').attr("href");
+
+      const newDownload: ComicLink = {
+        title,
+        pageUrl: url,
+        links: {
+          main: mainDownloadLink,
+          ...(mirror && { mirror }),
+          ...(mega && { mega }),
+          ...(mediafire && { mediafire }),
+          ...(zippyshare && { zippyshare }),
+          ...(dropapk && { dropapk }),
+          ...(ufile && { ufile }),
+          ...(cloudmail && { cloudmail }),
+        },
+      };
+
+      links.push(newDownload);
+    }
   } else {
     console.log("      Multi-comic page detected, parsing all links");
 
@@ -69,21 +136,24 @@ export async function parseDownloadLinks(url: string, links: ComicLink[]) {
         const downloadUrl = anchor.attr("href") as string;
         const anchorText = anchor.text().toLowerCase().replace(/\s/g, "");
 
-        if (anchorText === "mainserver" || anchorText === "link1") {
+        if (anchorText.includes("mainserver") || anchorText.includes("link1")) {
           main = downloadUrl;
-        } else if (anchorText.includes("mirror") || anchorText === "link2") {
+        } else if (
+          anchorText.includes("mirror") ||
+          anchorText.includes("link2")
+        ) {
           mirror = downloadUrl;
-        } else if (anchorText === "mega") {
+        } else if (anchorText.includes("mega")) {
           mega = downloadUrl;
-        } else if (anchorText === "mediafire") {
+        } else if (anchorText.includes("mediafire")) {
           mediafire = downloadUrl;
-        } else if (anchorText === "zippyshare") {
+        } else if (anchorText.includes("zippyshare")) {
           zippyshare = downloadUrl;
-        } else if (anchorText === "dropapk") {
+        } else if (anchorText.includes("dropapk")) {
           dropapk = downloadUrl;
-        } else if (anchorText === "ufile") {
+        } else if (anchorText.includes("ufile")) {
           ufile = downloadUrl;
-        } else if (anchorText === "cloudmail") {
+        } else if (anchorText.includes("cloudmail")) {
           cloudmail = downloadUrl;
         }
       });
@@ -167,6 +237,42 @@ export async function parseIndexPage(url: string, links: ComicLink[]) {
   return hasNextPage;
 }
 
+function getRedirectedLinks(links: ComicLink[]): Promise<ComicLink[]> {
+  return Promise.all(
+    links.map(
+      async ({
+        title,
+        pageUrl,
+        links: {
+          main,
+          mirror,
+          mega,
+          mediafire,
+          zippyshare,
+          dropapk,
+          ufile,
+          cloudmail,
+        },
+      }) => ({
+        title,
+        pageUrl,
+        links: {
+          ...(main && { main: await getRedirectLocation(main) }),
+          ...(mirror && { mirror: await getRedirectLocation(mirror) }),
+          ...(mega && { mega: await getRedirectLocation(mega) }),
+          ...(mediafire && { mediafire: await getRedirectLocation(mediafire) }),
+          ...(zippyshare && {
+            zippyshare: await getRedirectLocation(zippyshare),
+          }),
+          ...(dropapk && { dropapk: await getRedirectLocation(dropapk) }),
+          ...(ufile && { ufile: await getRedirectLocation(ufile) }),
+          ...(cloudmail && { cloudmail: await getRedirectLocation(cloudmail) }),
+        },
+      })
+    )
+  );
+}
+
 const BASE_URL = "https://getcomics.info";
 
 export async function parseAllLinks(
@@ -183,13 +289,15 @@ export async function parseAllLinks(
   if (options.url) {
     const url = prefixHttps(options.url);
 
-    if (!urlExists(url)) {
-      throw new Error("The value passed for `url` is not a valid URL.");
+    if (!(await urlExists(url))) {
+      throw new Error(
+        `The value "${options.url}" passed for 'url' is not a valid URL.`
+      );
     }
 
     if (!/https:\/\/getcomics\.info/.test(url)) {
       throw new Error(
-        "The value passed for `url` is not a valid GetComics URL."
+        `The value "${options.url}" passed for 'url' is not a valid GetComics URL.`
       );
     }
 
@@ -223,39 +331,7 @@ export async function parseAllLinks(
     }
   }
 
-  const fullRedirectedLinks = await Promise.all(
-    links.map(
-      async ({
-        title,
-        pageUrl,
-        links: {
-          main,
-          mirror,
-          mega,
-          mediafire,
-          zippyshare,
-          dropapk,
-          ufile,
-          cloudmail,
-        },
-      }) => ({
-        title,
-        pageUrl,
-        links: {
-          ...(main && { main: await getRedirectLocation(main) }),
-          ...(mirror && { mirror: await getRedirectLocation(mirror) }),
-          ...(mega && { mega: await getRedirectLocation(mega) }),
-          ...(mediafire && { mediafire: await getRedirectLocation(mediafire) }),
-          ...(zippyshare && {
-            zippyshare: await getRedirectLocation(zippyshare),
-          }),
-          ...(dropapk && { dropapk: await getRedirectLocation(dropapk) }),
-          ...(ufile && { ufile: await getRedirectLocation(ufile) }),
-          ...(cloudmail && { cloudmail: await getRedirectLocation(cloudmail) }),
-        },
-      })
-    )
-  );
+  const fullRedirectedLinks = await getRedirectedLinks(links);
 
   return fullRedirectedLinks;
 }
