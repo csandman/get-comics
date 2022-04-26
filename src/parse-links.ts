@@ -1,5 +1,6 @@
 import { writeFile } from "fs/promises";
 import path from "path";
+import chalk from "chalk";
 import { getDateTime } from "./utils/date";
 import loadPage from "./utils/load-page";
 import { getRedirectLocation } from "./utils/requests";
@@ -7,7 +8,7 @@ import { prefixHttps, urlExists } from "./utils/url";
 import type { GetComicsOptions, ComicLink } from "./types";
 
 export async function parseDownloadLinks(url: string, links: ComicLink[]) {
-  console.log("Parsing download links from comic page at URL:", url);
+  console.log("    Parsing download links from comic page at URL:", url);
 
   const page = await loadPage(url);
 
@@ -41,7 +42,7 @@ export async function parseDownloadLinks(url: string, links: ComicLink[]) {
 
     links.push(newDownload);
   } else {
-    console.log("Multi-comic page detected, parsing all links");
+    console.log("      Multi-comic page detected, parsing all links");
 
     page("section.post-contents li").each((i, liSel) => {
       const li = page(liSel);
@@ -122,7 +123,7 @@ export async function parseDownloadLinks(url: string, links: ComicLink[]) {
 }
 
 export async function parseWeekPage(url: string, links: ComicLink[]) {
-  console.log("Parsing week page at URL:", url);
+  console.log("  Parsing week page at URL:", url);
 
   const page = await loadPage(url);
 
@@ -171,6 +172,12 @@ const BASE_URL = "https://getcomics.info";
 export async function parseAllLinks(
   options: GetComicsOptions
 ): Promise<ComicLink[]> {
+  console.log(
+    "\n------------------------------------------------------------------------------\n\n",
+    chalk.bold("Finding All Download Links"),
+    "\n\n------------------------------------------------------------------------------\n"
+  );
+
   const links: ComicLink[] = [];
 
   if (options.url) {

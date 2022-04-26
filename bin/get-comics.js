@@ -1,4 +1,5 @@
 #! /usr/bin/env node
+import chalk from "chalk";
 import commandLineArgs from "command-line-args";
 import commandLineUsage from "command-line-usage";
 import getComics from "../dist/index.js";
@@ -108,11 +109,10 @@ const { help, ...options } = commandLineArgs(
 );
 
 if (help) {
-  const asciiText = `
-╔═╗╔═╗╔╦╗  ╔═╗╔═╗╔╦╗╦╔═╗╔═╗
-║ ╦║╣  ║───║  ║ ║║║║║║  ╚═╗
-╚═╝╚═╝ ╩   ╚═╝╚═╝╩ ╩╩╚═╝╚═╝
-`;
+  const asciiText = chalk.cyan(`
+  ╔═╗╔═╗╔╦╗  ╔═╗╔═╗╔╦╗╦╔═╗╔═╗
+  ║ ╦║╣  ║───║  ║ ║║║║║║  ╚═╗
+  ╚═╝╚═╝ ╩   ╚═╝╚═╝╩ ╩╩╚═╝╚═╝`);
 
   const usage = commandLineUsage([
     {

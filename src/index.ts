@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import mkdirp from "mkdirp";
 import downloadAllComics from "./download-all-comics";
 import { parseAllLinks, writeLinksFile } from "./parse-links";
@@ -9,7 +10,15 @@ const DEFAULT_OPTIONS: GetComicsOptions = {
   output: process.cwd(),
 };
 
+const asciiTitle = chalk.cyan(`
+  ╔═╗╔═╗╔╦╗  ╔═╗╔═╗╔╦╗╦╔═╗╔═╗
+  ║ ╦║╣  ║───║  ║ ║║║║║║  ╚═╗
+  ╚═╝╚═╝ ╩   ╚═╝╚═╝╩ ╩╩╚═╝╚═╝
+`);
+
 async function getComics(opts: Partial<GetComicsOptions>) {
+  console.log(asciiTitle);
+
   const options: GetComicsOptions = {
     ...DEFAULT_OPTIONS,
     ...opts,

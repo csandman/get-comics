@@ -16,6 +16,11 @@ async function downloadAllComics(
   links: ComicLink[],
   options: GetComicsOptions
 ) {
+  console.log(
+    "\n------------------------------------------------------------------------------\n\n",
+    chalk.bold("Downloading All Comics")
+  );
+
   for (let i = 0; i < links.length; i += 1) {
     const {
       title,
@@ -108,7 +113,7 @@ async function downloadAllComics(
       if (!options.noExtract && /\.zip$/i.test(fileName)) {
         try {
           console.log(
-            "The comics for this download are in a .zip archive, attempting to extract"
+            "\nThe comics for this download are in a .zip archive, attempting to extract"
           );
           const zipFilePath = path.join(options.output, fileName);
           filePaths = await extractZip(zipFilePath, options.output);
