@@ -17,7 +17,11 @@ async function getComics(opts: Partial<GetComicsOptions>) {
 
   const links = await parseAllLinks(options);
 
-  console.log(links);
+  console.log(
+    `\nFinished parsing all links,`,
+    links.length,
+    `comic files found`
+  );
 
   await mkdirp(options.output);
 

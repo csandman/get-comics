@@ -1,5 +1,7 @@
 import path from "path";
+import chalk from "chalk";
 import rimraf from "rimraf";
+import convertToCbz from "./convert-to-cbz";
 import downloadComic from "./download-comic";
 import { extractZip } from "./utils/archive";
 import {
@@ -16,8 +18,15 @@ async function downloadAllComics(
 ) {
   for (let i = 0; i < links.length; i += 1) {
     const {
+      title,
       links: { main, mirror, mega, mediafire, zippyshare },
     } = links[i];
+
+    console.log(
+      "\n------------------------------------------------------------------------------\n\n",
+      "Downloading Comic:",
+      title
+    );
 
     let success = false;
 
@@ -92,21 +101,42 @@ async function downloadAllComics(
       }
     }
 
-    // Extract any downloaded .zip files
-    if (!options.noExtract && fileName && /\.zip$/i.test(fileName)) {
-      try {
-        console.log(
-          "The comics for this download are in a .zip archive, attempting to extract"
-        );
-        const filePath = path.join(options.output, fileName);
-        await extractZip(filePath, options.output);
+    if (fileName) {
+      let filePaths: string[] = [path.join(options.output, fileName)];
 
-        console.log("Finished extracting archive, deleting .zip file");
-        rimraf.sync(filePath, { glob: false });
-      } catch (err) {
-        console.error("Error extracting zip archive:");
-        console.error((err as Error).message);
+      // Extract any downloaded .zip files
+      if (!options.noExtract && /\.zip$/i.test(fileName)) {
+        try {
+          console.log(
+            "The comics for this download are in a .zip archive, attempting to extract"
+          );
+          const zipFilePath = path.join(options.output, fileName);
+          filePaths = await extractZip(zipFilePath, options.output);
+
+          console.log("Finished extracting archive, deleting .zip file");
+          rimraf.sync(zipFilePath, { glob: false });
+        } catch (err) {
+          console.error("Error extracting zip archive:");
+          console.error((err as Error).message);
+        }
       }
+
+      // Convert all comics in zip to CBZ
+      if (options.cbz) {
+        for (let j = 0; j < filePaths.length; j += 1) {
+          const filePath = filePaths[j];
+
+          if (/\.cbr$/i.test(filePath)) {
+            console.log("\nConverting CBR comic file to CBZ");
+            await convertToCbz(filePath);
+          }
+        }
+      }
+    } else {
+      console.warn(
+        "No downloads succeeded for comic:",
+        chalk.bold.underline(title)
+      );
     }
   }
 }

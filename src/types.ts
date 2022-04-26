@@ -38,13 +38,6 @@ export interface GetComicsOptions {
   saveLinks?: boolean;
 
   /**
-   * By default any .zip archives containing a collection of comics will be
-   * extracted and the archive file will be removed. If this option is passed,
-   * the archive file will be left as is.
-   */
-  noExtract?: boolean;
-
-  /**
    * A specific GetComics download page URL to download comics from.
    *
    * @example
@@ -80,6 +73,18 @@ export interface GetComicsOptions {
    * A GetComics category to use for downloading (will be overridden by tag)
    */
   category?: string;
+
+  /**
+   * By default any .zip archives containing a collection of comics will be
+   * extracted and the archive file will be removed. If this option is passed,
+   * the archive file will be left as is.
+   */
+  noExtract?: boolean;
+
+  /**
+   * Convert any downloaded .cbr files to .cbz
+   */
+  cbz?: boolean;
 }
 
 export interface ComicLink {

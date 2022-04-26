@@ -29,13 +29,7 @@ const basicOptions = [
     name: "save-links",
     alias: "l",
     description:
-      "When passed, a file named links_<DateTime>.json will be saved in the same directory as the downloaded comics.\n",
-    type: Boolean,
-  },
-  {
-    name: "no-extract",
-    description:
-      "By default any .zip archives containing a collection of comics will be extracted and the archive file will be removed. If this option is passed, the archive file will be left as is.",
+      "When passed, a file named links_<DateTime>.json will be saved in the same directory as the downloaded comics.",
     type: Boolean,
   },
 ];
@@ -88,8 +82,28 @@ const filterOptions = [
   },
 ];
 
+const processingOptions = [
+  {
+    name: "no-extract",
+    description:
+      "By default any .zip archives containing a collection of comics will be extracted and the archive file will be removed. If this option is passed, the archive file will be left as is.\n",
+    type: Boolean,
+  },
+  {
+    name: "cbz",
+    alias: "z",
+    description: "Convert any downloaded .cbr files to .cbz",
+    type: Boolean,
+  },
+];
+
 const { help, ...options } = commandLineArgs(
-  [...basicOptions, ...selectionOptions, ...filterOptions],
+  [
+    ...basicOptions,
+    ...selectionOptions,
+    ...filterOptions,
+    ...processingOptions,
+  ],
   { camelCase: true }
 );
 
@@ -119,6 +133,10 @@ if (help) {
     {
       header: "Filter Options",
       optionList: filterOptions,
+    },
+    {
+      header: "Processing Options",
+      optionList: processingOptions,
     },
     {
       content: "GitHub: {underline https://github.com/csandman/get-comics}",
