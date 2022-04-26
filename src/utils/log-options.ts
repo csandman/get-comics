@@ -1,50 +1,70 @@
-import { Console } from "console";
 import path from "path";
-import { Transform } from "stream";
+import chalk from "chalk";
 import type { GetComicsOptions } from "../types";
 
-function getTable(input: Record<string, number | string>[]) {
-  // @see https://stackoverflow.com/a/67859384
-  const ts = new Transform({
-    transform(chunk, enc, cb) {
-      cb(null, chunk);
-    },
-  });
-  const logger = new Console({ stdout: ts });
-  logger.table(input);
-  const table = (ts.read() || "").toString();
-  let result = "";
-  table.split(/[\r\n]+/).forEach((row: string) => {
-    const r = row
-      .replace(/[^┬]*┬/, "┌")
-      .replace(/^├─*┼/, "├")
-      .replace(/│[^│]*/, "")
-      .replace(/^└─*┴/, "└")
-      .replace(/'/g, " ");
+function logFormattedRow(option: string, value: string | number | boolean) {
+  const start = chalk.whiteBright(option).padEnd(30, " ");
+  let end = chalk.yellowBright(value);
 
-    result += `${r}\n`;
-  });
+  const valueType = typeof value;
+  if (valueType === "string" && value !== "∞") {
+    end = chalk.blueBright(value);
+  } else if (valueType === "boolean") {
+    end = chalk.greenBright(value);
+  }
 
-  return result;
+  console.log(chalk.underline(`${start}${end}`));
 }
 
 function logOptions(options: GetComicsOptions) {
-  console.log("Options Selected:");
+  console.log(chalk.cyanBright.bold.underline("Options Selected:\n"));
 
-  const opts = [
-    {
-      Option: "Output Path",
-      Value: path.resolve(options.output),
-    },
-    {
-      Option: "Total Pages",
-      Value: options.pages <= 0 ? "∞" : options.pages,
-    },
-  ];
+  logFormattedRow("Output Path", path.resolve(options.output));
+  if (options.saveLinks) {
+    logFormattedRow("Save Links File", true);
+  }
+  if (options.overwrite) {
+    logFormattedRow("Overwrite Existing", true);
+  }
 
-  const table = getTable(opts);
+  console.log("");
 
-  console.log(table);
+  logFormattedRow("Pages", options.pages <= 0 ? "∞" : options.pages);
+  logFormattedRow("Start Page", options.start);
+
+  if (
+    [options.url, options.query, options.tag, options.category]
+      .map(Boolean)
+      .includes(true)
+  ) {
+    console.log("");
+
+    if (options.url) {
+      logFormattedRow("URL to Download", options.url);
+    } else {
+      if (options.query) {
+        logFormattedRow("Search Query", options.query);
+      }
+
+      if (options.tag) {
+        logFormattedRow("GetComics Tag", options.tag);
+      } else if (options.category) {
+        logFormattedRow("GetComics Category", options.category);
+      }
+    }
+  }
+
+  if (options.cbz || options.noExtract) {
+    console.log("");
+
+    if (options.cbz) {
+      logFormattedRow("Convert to CBZ", true);
+    }
+
+    if (options.noExtract) {
+      logFormattedRow("Don't Extract ZIPs", true);
+    }
+  }
 }
 
 export default logOptions;
