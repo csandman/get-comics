@@ -35,7 +35,6 @@
     "cli-progress": "^3.10.0",
     "command-line-args": "^5.2.1",
     "command-line-usage": "^6.1.3",
-    "filehost-meta": "^1.1.3",
     "megajs": "^1.0.3",
     "mkdirp": "^1.0.4",
     "nanoid": "^3.3.3",
