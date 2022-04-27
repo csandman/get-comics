@@ -59,7 +59,7 @@ async function getDownloadParts(downloadUrl: string) {
     ) {
       fileName = getFilenameFromContentDisposition(res);
     } else {
-      fileName = decodeURIComponent(downloadUrl.split("/").pop() as string);
+      fileName = decodeURIComponent(realDownloadUrl.split("/").pop() as string);
     }
   }
 
