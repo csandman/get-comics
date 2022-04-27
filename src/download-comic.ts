@@ -2,6 +2,7 @@ import { createWriteStream, existsSync } from "fs";
 import path from "path";
 import { File } from "megajs";
 import fetch from "node-fetch";
+import rimraf from "rimraf";
 import { extract as getZippyshareLink } from "zs-extract";
 import getProgressBar from "./utils/get-progress-bar";
 import { getMediafireLink } from "./utils/mediafire";
@@ -75,33 +76,39 @@ async function downloadComic(comicUrl: string, options: GetComicsOptions) {
   const resSize = Number(fileSize);
 
   const outputFilePath = path.join(options.output, fileName);
-  if (existsSync(outputFilePath)) {
-    if (options.overwrite) {
-      console.log("Comic file already exists, overwriting");
-    } else {
-      console.log("Comic file already exists, skipping download");
-      return "";
+
+  try {
+    if (existsSync(outputFilePath)) {
+      if (options.overwrite) {
+        console.log("Comic file already exists, overwriting");
+      } else {
+        console.log("Comic file already exists, skipping download");
+        return "";
+      }
     }
+
+    const fileStream = createWriteStream(outputFilePath);
+
+    const progressBar = getProgressBar(resSize);
+    let totalBytes = 0;
+
+    await new Promise<void>((resolve, reject) => {
+      downloadStream.pipe(fileStream);
+      downloadStream.on("error", reject);
+      downloadStream.on("data", (chunk) => {
+        totalBytes += chunk.length;
+        progressBar.update(totalBytes);
+      });
+      fileStream.on("finish", () => {
+        progressBar.stop();
+        console.log("Finished downloading comic:", outputFilePath);
+        resolve();
+      });
+    });
+  } catch (err) {
+    rimraf.sync(outputFilePath);
+    throw err;
   }
-
-  const fileStream = createWriteStream(outputFilePath);
-
-  const progressBar = getProgressBar(resSize);
-  let totalBytes = 0;
-
-  await new Promise<void>((resolve, reject) => {
-    downloadStream.pipe(fileStream);
-    downloadStream.on("error", reject);
-    downloadStream.on("data", (chunk) => {
-      totalBytes += chunk.length;
-      progressBar.update(totalBytes);
-    });
-    fileStream.on("finish", () => {
-      progressBar.stop();
-      console.log("Finished downloading comic:", outputFilePath);
-      resolve();
-    });
-  });
 
   return fileName;
 }
