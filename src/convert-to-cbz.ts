@@ -6,7 +6,7 @@ import { createArchive, extractRar } from "./utils/archive";
 async function convertToCbz(filePath: string) {
   const fileDir = path.parse(filePath).dir;
 
-  const tempDirName = nanoid();
+  const tempDirName = `.temp-${nanoid()}`;
   const tempDirPath = path.join(fileDir, tempDirName);
 
   try {
