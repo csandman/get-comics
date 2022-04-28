@@ -7,7 +7,11 @@ import { createExtractorFromFile } from "node-unrar-js";
 import yauzl from "yauzl";
 import type { Entry } from "yauzl";
 
-export const extractZip = async (filePath: string, outputPath: string) => {
+export const extractZip = async (
+  filePath: string,
+  outputPath: string,
+  shouldFlatten = false
+) => {
   await mkdirp(outputPath);
 
   const filePaths: string[] = [];
@@ -37,10 +41,14 @@ export const extractZip = async (filePath: string, outputPath: string) => {
             });
 
             const baseFileName = path.parse(entry.fileName).base;
-
             console.log("Extracting file:", baseFileName);
 
-            const outputFilePath = path.join(outputPath, baseFileName);
+            const outputFilePath = path.join(
+              outputPath,
+              shouldFlatten ? baseFileName : entry.fileName
+            );
+            const outputFileDir = path.parse(outputFilePath).dir;
+            await mkdirp(outputFileDir);
 
             filePaths.push(outputFilePath);
 
