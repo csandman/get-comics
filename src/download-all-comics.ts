@@ -8,6 +8,7 @@ import {
   styledGetComics,
   styledMediaFire,
   styledMega,
+  styledUsersCloud,
   styledZippyShare,
 } from "./utils/styling";
 import type { GetComicsOptions, ComicLink } from "./types";
@@ -24,7 +25,7 @@ async function downloadAllComics(
   for (let i = 0; i < links.length; i += 1) {
     const {
       title,
-      links: { main, mirror, mega, mediafire, zippyshare },
+      links: { main, mirror, mega, mediafire, zippyshare, userscloud },
     } = links[i];
 
     console.log(
@@ -106,10 +107,24 @@ async function downloadAllComics(
       }
     }
 
+    if (!success && userscloud) {
+      try {
+        console.log(`\nAttempting download from ${styledUsersCloud}`);
+        fileName = await downloadComic(userscloud, options);
+        success = true;
+      } catch (err) {
+        console.error(
+          `Error downloading from ${styledUsersCloud}:\n`,
+          (err as Error).message
+        );
+      }
+    }
+
     if (fileName) {
       let filePaths: string[] = [path.join(options.output, fileName)];
 
       // Extract any downloaded .zip files
+      // ex. https://getcomics.info/other-comics/wayward-1-22-tpb-vol-1-3-deluxe-books-2014-2017/
       if (!options.noExtract && /\.zip$/i.test(fileName)) {
         try {
           console.log(

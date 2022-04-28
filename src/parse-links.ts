@@ -1,11 +1,237 @@
 import { writeFile } from "fs/promises";
 import path from "path";
 import chalk from "chalk";
+import any from "./utils/any";
 import { getDateTime } from "./utils/date";
 import loadPage from "./utils/load-page";
 import { getRedirectLocation } from "./utils/requests";
 import { prefixHttps, urlExists } from "./utils/url";
 import type { GetComicsOptions, ComicLink } from "./types";
+import type { CheerioAPI } from "cheerio";
+
+/**
+ * Parse a comic page that only has a single comic to download
+ *
+ * @see {@link https://getcomics.info/dc/dark-knights-of-steel-6-2022/}
+ *
+ * @param page - The cheerio page to parse
+ * @param url - The comic page's URL
+ * @param links - A list of the final links to download
+ */
+export function parseSingleComicPage(
+  page: CheerioAPI,
+  url: string,
+  links: ComicLink[]
+) {
+  const mainDownloadLink = page('a[title="Download Now"]').attr("href");
+
+  const title = page("h1").first().text().trim();
+
+  const mirror = page('a[title*="Mirror Download" i]').attr("href");
+  const mega = page('a[title*="MEGA" i]').attr("href");
+  const mediafire = page('a[title*="MEDIAFIRE" i]').attr("href");
+  const zippyshare = page('a[title*="ZIPPYSHARE" i]').attr("href");
+  const ufile = page('a[title*="UFILE" i]').attr("href");
+  const dropapk = page('a[title*="DropAPK" i]').attr("href");
+  const cloudmail = page('a[title*="CloudMail" i]').attr("href");
+  const userscloud = page('a[title*="Userscloud" i]').attr("href");
+
+  const newDownload: ComicLink = {
+    title,
+    pageUrl: url,
+    links: {
+      main: mainDownloadLink,
+      ...(mirror && { mirror }),
+      ...(mega && { mega }),
+      ...(mediafire && { mediafire }),
+      ...(zippyshare && { zippyshare }),
+      ...(dropapk && { dropapk }),
+      ...(ufile && { ufile }),
+      ...(cloudmail && { cloudmail }),
+      ...(userscloud && { userscloud }),
+    },
+  };
+
+  links.push(newDownload);
+}
+
+/**
+ * Parse a comic page with multiple comics to download
+ *
+ * @see {@link https://getcomics.info/other-comics/the-walking-dead-vol-1-24-tpb-extras-ultimate-collection/ }
+ *
+ * @param page - The cheerio page to parse
+ * @param url - The comic page's URL
+ * @param links - A list of the final links to download
+ */
+export function parseMultiComicPage(
+  page: CheerioAPI,
+  url: string,
+  links: ComicLink[]
+) {
+  console.log("      Multi-comic page detected, parsing all links");
+
+  page("section.post-contents li").each((i, liSel) => {
+    const li = page(liSel);
+
+    const title = li
+      .first()
+      .contents()
+      .filter((ii, node) => node.type === "text")
+      .text()
+      .trim();
+
+    let main = "";
+    let mirror = "";
+    let mega = "";
+    let mediafire = "";
+    let zippyshare = "";
+    let dropapk = "";
+    let ufile = "";
+    let cloudmail = "";
+    let userscloud = "";
+
+    page("a", li).each((ii, anchorSel) => {
+      const anchor = page(anchorSel);
+
+      const downloadUrl = anchor.attr("href") as string;
+      const anchorText = anchor.text().toLowerCase().replace(/\s/g, "");
+
+      if (anchorText.includes("mainserver") || anchorText.includes("link1")) {
+        main = downloadUrl;
+      } else if (
+        anchorText.includes("mirror") ||
+        anchorText.includes("link2")
+      ) {
+        mirror = downloadUrl;
+      } else if (anchorText.includes("mega")) {
+        mega = downloadUrl;
+      } else if (anchorText.includes("mediafire")) {
+        mediafire = downloadUrl;
+      } else if (anchorText.includes("zippyshare")) {
+        zippyshare = downloadUrl;
+      } else if (anchorText.includes("dropapk")) {
+        dropapk = downloadUrl;
+      } else if (anchorText.includes("ufile")) {
+        ufile = downloadUrl;
+      } else if (anchorText.includes("cloudmail")) {
+        cloudmail = downloadUrl;
+      } else if (anchorText.includes("userscloud")) {
+        userscloud = downloadUrl;
+      }
+    });
+
+    const hasDownloadLink = any(
+      main,
+      mirror,
+      mega,
+      mediafire,
+      zippyshare,
+      dropapk,
+      ufile,
+      cloudmail,
+      userscloud
+    );
+
+    if (hasDownloadLink) {
+      const newDownload: ComicLink = {
+        title,
+        pageUrl: url,
+        links: {
+          ...(main && { main }),
+          ...(mirror && { mirror }),
+          ...(mega && { mega }),
+          ...(mediafire && { mediafire }),
+          ...(zippyshare && { zippyshare }),
+          ...(dropapk && { dropapk }),
+          ...(ufile && { ufile }),
+          ...(cloudmail && { cloudmail }),
+          ...(userscloud && { userscloud }),
+        },
+      };
+
+      links.push(newDownload);
+    }
+  });
+}
+
+/**
+ * Parse a comic page that is formatted the same as a page with a single comic
+ * download but actually has multiple
+ *
+ * @see {@link https://getcomics.info/other-comics/uncle-scrooge-1-404-complete/}
+ *
+ * @param page - The cheerio page to parse
+ * @param url - The comic page's URL
+ * @param links - A list of the final links to download
+ */
+export function parseMultiSingleComicPage(
+  page: CheerioAPI,
+  url: string,
+  links: ComicLink[]
+) {
+  console.log("      Multi-comic page detected, parsing all links");
+
+  page("p:empty").remove();
+
+  const mainDownloadAnchors = page('a[title="Download Now"]');
+
+  mainDownloadAnchors.each((anchorI, anchorEl) => {
+    const anchor = page(anchorEl);
+
+    const main = anchor.attr("href");
+
+    let buttonContainer = anchor.parent().parent();
+
+    const titleContainer = buttonContainer.prev("p");
+    const title = page("strong", titleContainer).first().text();
+
+    const comicLink: ComicLink = {
+      title,
+      pageUrl: url,
+      links: {
+        main,
+      },
+    };
+
+    let nextElementIsButton = true;
+
+    while (nextElementIsButton) {
+      buttonContainer = buttonContainer.next();
+      const className = buttonContainer.attr("class");
+      if (className === "aio-button-center") {
+        const linkEl = page("a", buttonContainer);
+
+        const downloadUrl = linkEl.attr("href") as string;
+        const linkTitle = (linkEl.attr("title") || "")
+          .toLowerCase()
+          .replace(/\s/g, "");
+
+        if (linkTitle.includes("mirror") || linkTitle.includes("link2")) {
+          comicLink.links.mirror = downloadUrl;
+        } else if (linkTitle.includes("mega")) {
+          comicLink.links.mega = downloadUrl;
+        } else if (linkTitle.includes("mediafire")) {
+          comicLink.links.mediafire = downloadUrl;
+        } else if (linkTitle.includes("zippyshare")) {
+          comicLink.links.zippyshare = downloadUrl;
+        } else if (linkTitle.includes("dropapk")) {
+          comicLink.links.dropapk = downloadUrl;
+        } else if (linkTitle.includes("ufile")) {
+          comicLink.links.ufile = downloadUrl;
+        } else if (linkTitle.includes("cloudmail")) {
+          comicLink.links.cloudmail = downloadUrl;
+        } else if (linkTitle.includes("userscloud")) {
+          comicLink.links.userscloud = downloadUrl;
+        }
+      } else {
+        nextElementIsButton = false;
+      }
+    }
+
+    links.push(comicLink);
+  });
+}
 
 export async function parseDownloadLinks(url: string, links: ComicLink[]) {
   console.log("    Parsing download links from comic page at URL:", url);
@@ -18,177 +244,13 @@ export async function parseDownloadLinks(url: string, links: ComicLink[]) {
 
   // This will be true when the page is structured to have only one comic to download
   if (mainDownloadLink) {
-    // Sometimes the page will have multiple downloads even when structured like this
-    // ex. https://getcomics.info/other-comics/uncle-scrooge-1-404-complete/
     if (mainDownloadAnchors.length > 1) {
-      console.log("      Multi-comic page detected, parsing all links");
-
-      page("p:empty").remove();
-
-      mainDownloadAnchors.each((anchorI, anchorEl) => {
-        const anchor = page(anchorEl);
-
-        const main = anchor.attr("href");
-
-        let buttonContainer = anchor.parent().parent();
-
-        const titleContainer = buttonContainer.prev("p");
-        const title = page("strong", titleContainer).first().text();
-
-        const comicLink: ComicLink = {
-          title,
-          pageUrl: url,
-          links: {
-            main,
-          },
-        };
-
-        let nextElementIsButton = true;
-
-        while (nextElementIsButton) {
-          buttonContainer = buttonContainer.next();
-          const className = buttonContainer.attr("class");
-          if (className === "aio-button-center") {
-            const linkEl = page("a", buttonContainer);
-
-            const downloadUrl = linkEl.attr("href") as string;
-            const linkTitle = (linkEl.attr("title") || "")
-              .toLowerCase()
-              .replace(/\s/g, "");
-
-            if (linkTitle.includes("mirror") || linkTitle.includes("link2")) {
-              comicLink.links.mirror = downloadUrl;
-            } else if (linkTitle.includes("mega")) {
-              comicLink.links.mega = downloadUrl;
-            } else if (linkTitle.includes("mediafire")) {
-              comicLink.links.mediafire = downloadUrl;
-            } else if (linkTitle.includes("zippyshare")) {
-              comicLink.links.zippyshare = downloadUrl;
-            } else if (linkTitle.includes("dropapk")) {
-              comicLink.links.dropapk = downloadUrl;
-            } else if (linkTitle.includes("ufile")) {
-              comicLink.links.ufile = downloadUrl;
-            } else if (linkTitle.includes("cloudmail")) {
-              comicLink.links.cloudmail = downloadUrl;
-            } else if (linkTitle.includes("userscloud")) {
-              comicLink.links.userscloud = downloadUrl;
-            }
-          } else {
-            nextElementIsButton = false;
-          }
-        }
-
-        links.push(comicLink);
-      });
+      parseMultiSingleComicPage(page, url, links);
     } else {
-      const title = page("section.post-contents h2").first().text().trim();
-
-      const mirror = page('a[title*="Mirror Download" i]').attr("href");
-      const mega = page('a[title*="MEGA" i]').attr("href");
-      const mediafire = page('a[title*="MEDIAFIRE" i]').attr("href");
-      const zippyshare = page('a[title*="ZIPPYSHARE" i]').attr("href");
-      const ufile = page('a[title*="UFILE" i]').attr("href");
-      const dropapk = page('a[title*="DropAPK" i]').attr("href");
-      const cloudmail = page('a[title*="CloudMail" i]').attr("href");
-
-      const newDownload: ComicLink = {
-        title,
-        pageUrl: url,
-        links: {
-          main: mainDownloadLink,
-          ...(mirror && { mirror }),
-          ...(mega && { mega }),
-          ...(mediafire && { mediafire }),
-          ...(zippyshare && { zippyshare }),
-          ...(dropapk && { dropapk }),
-          ...(ufile && { ufile }),
-          ...(cloudmail && { cloudmail }),
-        },
-      };
-
-      links.push(newDownload);
+      parseSingleComicPage(page, url, links);
     }
   } else {
-    console.log("      Multi-comic page detected, parsing all links");
-
-    page("section.post-contents li").each((i, liSel) => {
-      const li = page(liSel);
-
-      const title = li
-        .first()
-        .contents()
-        .filter((ii, node) => node.type === "text")
-        .text()
-        .trim();
-
-      let main = "";
-      let mirror = "";
-      let mega = "";
-      let mediafire = "";
-      let zippyshare = "";
-      let dropapk = "";
-      let ufile = "";
-      let cloudmail = "";
-
-      page("a", li).each((ii, anchorSel) => {
-        const anchor = page(anchorSel);
-
-        const downloadUrl = anchor.attr("href") as string;
-        const anchorText = anchor.text().toLowerCase().replace(/\s/g, "");
-
-        if (anchorText.includes("mainserver") || anchorText.includes("link1")) {
-          main = downloadUrl;
-        } else if (
-          anchorText.includes("mirror") ||
-          anchorText.includes("link2")
-        ) {
-          mirror = downloadUrl;
-        } else if (anchorText.includes("mega")) {
-          mega = downloadUrl;
-        } else if (anchorText.includes("mediafire")) {
-          mediafire = downloadUrl;
-        } else if (anchorText.includes("zippyshare")) {
-          zippyshare = downloadUrl;
-        } else if (anchorText.includes("dropapk")) {
-          dropapk = downloadUrl;
-        } else if (anchorText.includes("ufile")) {
-          ufile = downloadUrl;
-        } else if (anchorText.includes("cloudmail")) {
-          cloudmail = downloadUrl;
-        }
-      });
-
-      const hasDownloadLink =
-        [
-          main,
-          mirror,
-          mega,
-          mediafire,
-          zippyshare,
-          dropapk,
-          ufile,
-          cloudmail,
-        ].filter(Boolean).length > 0;
-
-      if (hasDownloadLink) {
-        const newDownload: ComicLink = {
-          title,
-          pageUrl: url,
-          links: {
-            ...(main && { main }),
-            ...(mirror && { mirror }),
-            ...(mega && { mega }),
-            ...(mediafire && { mediafire }),
-            ...(zippyshare && { zippyshare }),
-            ...(dropapk && { dropapk }),
-            ...(ufile && { ufile }),
-            ...(cloudmail && { cloudmail }),
-          },
-        };
-
-        links.push(newDownload);
-      }
-    });
+    parseMultiComicPage(page, url, links);
   }
 }
 
@@ -252,6 +314,7 @@ function getRedirectedLinks(links: ComicLink[]): Promise<ComicLink[]> {
           dropapk,
           ufile,
           cloudmail,
+          userscloud,
         },
       }) => ({
         title,
@@ -267,6 +330,9 @@ function getRedirectedLinks(links: ComicLink[]): Promise<ComicLink[]> {
           ...(dropapk && { dropapk: await getRedirectLocation(dropapk) }),
           ...(ufile && { ufile: await getRedirectLocation(ufile) }),
           ...(cloudmail && { cloudmail: await getRedirectLocation(cloudmail) }),
+          ...(userscloud && {
+            userscloud: await getRedirectLocation(userscloud),
+          }),
         },
       })
     )

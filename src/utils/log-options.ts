@@ -1,5 +1,6 @@
 import path from "path";
 import chalk from "chalk";
+import any from "./any";
 import type { GetComicsOptions } from "../types";
 
 function logFormattedRow(option: string, value: string | number | boolean) {
@@ -32,11 +33,7 @@ function logOptions(options: GetComicsOptions) {
   logFormattedRow("Pages", options.pages <= 0 ? "∞" : options.pages);
   logFormattedRow("Start Page", options.start);
 
-  if (
-    [options.url, options.query, options.tag, options.category]
-      .map(Boolean)
-      .includes(true)
-  ) {
+  if (any(options.url, options.query, options.tag, options.category)) {
     console.log("");
 
     if (options.url) {
@@ -54,7 +51,7 @@ function logOptions(options: GetComicsOptions) {
     }
   }
 
-  if (options.cbz || options.noExtract) {
+  if (any(options.cbz, options.noExtract)) {
     console.log("");
 
     if (options.cbz) {

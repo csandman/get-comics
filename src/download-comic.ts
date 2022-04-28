@@ -10,13 +10,19 @@ import {
   checkIsHost,
   getFilenameFromContentDisposition,
 } from "./utils/requests";
-import { styledMediaFire, styledZippyShare } from "./utils/styling";
+import {
+  styledMediaFire,
+  styledUsersCloud,
+  styledZippyShare,
+} from "./utils/styling";
+import { getUsersCloudLink } from "./utils/userscloud";
 import type { GetComicsOptions } from "./types";
 
 // const MAIN_SERVER_HOST = "comicfiles.ru";
 const ZIPPYSHARE_HOST = "zippyshare.com";
 const MEDIAFIRE_HOST = "mediafire.com";
 const MEGA_HOST = "mega.nz";
+const USERSCLOUD_HOST = "userscloud.com";
 
 async function getDownloadParts(downloadUrl: string) {
   let fileName: string;
@@ -46,6 +52,12 @@ async function getDownloadParts(downloadUrl: string) {
         throw new Error(`No ${styledZippyShare} download available`);
       }
       realDownloadUrl = zippyUrl.download;
+    } else if (checkIsHost(downloadUrl, USERSCLOUD_HOST)) {
+      const usersCloudUrl = await getUsersCloudLink(downloadUrl);
+      if (!usersCloudUrl) {
+        throw new Error(`No ${styledUsersCloud} download available`);
+      }
+      realDownloadUrl = usersCloudUrl;
     }
 
     const res = await fetch(realDownloadUrl);
