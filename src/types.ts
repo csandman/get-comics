@@ -88,17 +88,65 @@ export interface GetComicsOptions {
 }
 
 export interface ComicLink {
+  /**
+   * The title of the comic on GetComics
+   */
   title: string;
+  /**
+   * The URL that the comic download link is parsed from
+   */
   pageUrl: string;
+  /**
+   * A list of links to file hosting sites to a comic from
+   */
   links: {
+    /**
+     * A download link from <random subdomain>.comicfiles.ru
+     *
+     * Automatic downloading from this type of link is supported
+     */
     main?: string;
+    /**
+     * An alternate download link from <random subdomain>.comicfiles.ru
+     *
+     * Automatic downloading from this type of link is supported
+     */
     mirror?: string;
+    /**
+     * A download link from mega.nz
+     *
+     * Automatic downloading from this type of link is supported
+     */
     mega?: string;
+    /**
+     * A download link from www.mediafire.com
+     *
+     * Automatic downloading from this type of link is supported
+     */
     mediafire?: string;
+    /**
+     * A download link from www.zippyshare.com
+     *
+     * Automatic downloading from this type of link is supported
+     */
     zippyshare?: string;
+    /**
+     * A download link from getcomics.ufile.io
+     */
     ufile?: string;
+    /**
+     * A download link from dropapk.to
+     */
     dropapk?: string;
+    /**
+     * A download link from cloud.mail.ru
+     */
     cloudmail?: string;
+    /**
+     * A download link from userscloud.com
+     *
+     * Automatic downloading from this type of link is supported
+     */
     userscloud?: string;
   };
 }
