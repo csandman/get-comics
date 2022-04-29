@@ -64,19 +64,6 @@ async function downloadAllComics(
       }
     }
 
-    if (!success && mega) {
-      try {
-        console.log(`\nAttempting download from ${styledMega}`);
-        fileName = await downloadComic(mega, options);
-        success = true;
-      } catch (err) {
-        console.error(
-          `Error downloading from ${styledMega}:\n`,
-          (err as Error).message
-        );
-      }
-    }
-
     if (!success && main) {
       try {
         console.log(
@@ -102,6 +89,19 @@ async function downloadAllComics(
       } catch (err) {
         console.error(
           `Error downloading from ${styledGetComics} mirror:\n`,
+          (err as Error).message
+        );
+      }
+    }
+
+    if (!success && mega) {
+      try {
+        console.log(`\nAttempting download from ${styledMega}`);
+        fileName = await downloadComic(mega, options);
+        success = true;
+      } catch (err) {
+        console.error(
+          `Error downloading from ${styledMega}:\n`,
           (err as Error).message
         );
       }
