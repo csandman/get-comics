@@ -33,6 +33,14 @@ const basicOptions = [
       "When passed, a file named links_<DateTime>.json will be saved in the same directory as the downloaded comics.",
     type: Boolean,
   },
+  {
+    name: "base-url",
+    alias: "b",
+    description:
+      "The base URL to use for downloading comics. This should only be changed if the GetComics site changes its domain.",
+    type: String,
+    defaultValue: "getcomics.org",
+  },
 ];
 
 const selectionOptions = [
@@ -58,7 +66,7 @@ const filterOptions = [
     name: "url",
     alias: "u",
     description:
-      "A specific GetComics page URL to download all comics from. If this option is passed, most other selection options will be ignored.\nex. https://getcomics.info/other-comics/gideon-falls-deluxe-edition-book-1-the-legend-of-the-black-barn-2021/\n",
+      "A specific GetComics page URL to download all comics from. If this option is passed, most other selection options will be ignored.\nex. https://getcomics.org/other-comics/gideon-falls-deluxe-edition-book-1-the-legend-of-the-black-barn-2021/\n",
     type: String,
   },
   {
@@ -120,7 +128,7 @@ if (help) {
       raw: true,
     },
     {
-      content: ["Download recent comics from https://getcomics.info"],
+      content: ["Download recent comics from https://getcomics.org"],
     },
     {
       header: "Basic Options",

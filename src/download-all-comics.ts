@@ -124,7 +124,7 @@ async function downloadAllComics(
       let filePaths: string[] = [path.join(options.output, fileName)];
 
       // Extract any downloaded .zip files
-      // ex. https://getcomics.info/other-comics/wayward-1-22-tpb-vol-1-3-deluxe-books-2014-2017/
+      // ex. https://getcomics.org/other-comics/wayward-1-22-tpb-vol-1-3-deluxe-books-2014-2017/
       if (!options.noExtract && /\.zip$/i.test(fileName)) {
         try {
           console.log(

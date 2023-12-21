@@ -1,7 +1,7 @@
 # get-comics
 
 `get-comics` is a tool to download a list of comics from the site
-https://getcomics.info.
+https://getcomics.org.
 
 It is based on the package [ComicScraper](https://github.com/Gink3/ComicScraper) by [Gink3](https://github.com/Gink3).
 
@@ -28,45 +28,53 @@ You can filter which comics you'd like to download and determine how many pages 
 ```
 Basic Options
 
-  -h, --help            Display this usage guide.
+  -h, --help              Display this usage guide.
 
-  -o, --output <string> The location to store the resulting files in.
-                        Defaults to the current directory.
+  -o, --output string     The location to store the resulting files in. If the directory does not
+                          exist, it will be created.
+                          Defaults to the current directory.
 
-  -w, --overwrite       If passed, new comics with the same filenames will overwrite existing files
-                        with the same names.
+  -w, --overwrite         If passed, new comics with the same filenames will overwrite existing files
+                          with the same names.
 
-  -l, --save-links      When passed, a file named links_<DateTime>.json will be saved in the same
-                        directory as the downloaded comics.
-
-  --no-extract          By default any .zip archives containing a collection of comics will be
-                        extracted and the archive file will be removed. If this option is passed, the
-                        archive file will be left as is.
+  -l, --save-links        When passed, a file named links_<DateTime>.json will be saved in the same
+                          directory as the downloaded comics.
+  -b, --base-url string   The base URL to use for downloading comics. This should only be changed if
+                          the GetComics site changes its domain.
 
 Selection Options
 
-  -p, --pages <number> The total number of pages to download, starting from the most recently
+  -p, --pages number   The total number of pages to download, starting from the most recently
                        uploaded.
                        If you pass 0, all available pages will be downloaded.
 
-  -s, --start <number> The page to start parsing comic links on.
+  -s, --start number   The page to start parsing comic links on.
 
 Filter Options
 
-  -u, --url <string>      A specific GetComics page URL to download all comics from.
-                          ex. https://getcomics.info/other-comics/gideon-falls-deluxe-edition-book-1-
+  -u, --url string        A specific GetComics page URL to download all comics from. If this option is
+                          passed, most other selection options will be ignored.
+                          ex. https://getcomics.org/other-comics/gideon-falls-deluxe-edition-book-1-
                           the-legend-of-the-black-barn-2021/
 
-  -q, --query <string>    A search query to filter comics with.
+  -q, --query string      A search query to filter comics with.
                           ex. "Donald Duck"
 
-  -t, --tag <string>      A GetComics specific tag page to download comics with.
+  -t, --tag string        A GetComics specific tag page to download comics with.
                           This can be found in the URL of the site at /tag/<TAG>.
                           ex. "the-walking-dead" or "superman"
 
-  -c, --category <string> A GetComics specific category for comics.
+  -c, --category string   A GetComics specific category for comics.
                           This can be found in the URL of the site at /cat/<CATEGORY>
                           ex. "dc" or "marvel"
+
+Processing Options
+
+  --no-extract    By default any .zip archives containing a collection of comics will be
+                  extracted and the archive file will be removed. If this option is passed, the
+                  archive file will be left as is.
+
+  -z, --cbz       Convert any downloaded .cbr files to .cbz
 ```
 
 ## Examples

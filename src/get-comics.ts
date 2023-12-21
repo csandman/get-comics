@@ -3,12 +3,14 @@ import mkdirp from "mkdirp";
 import downloadAllComics from "./download-all-comics";
 import { parseAllLinks, writeLinksFile } from "./parse-links";
 import logOptions from "./utils/log-options";
+import { prefixHttps } from "./utils/url";
 import type { ComicLink, GetComicsOptions } from "./types";
 
 const DEFAULT_OPTIONS: GetComicsOptions = {
   pages: 1,
   start: 1,
   output: process.cwd(),
+  baseUrl: "getcomics.org",
 };
 
 const asciiTitle = chalk.cyan(`
@@ -24,6 +26,16 @@ async function getComics(opts: Partial<GetComicsOptions>) {
     ...DEFAULT_OPTIONS,
     ...opts,
   };
+
+  try {
+    const url = new URL(prefixHttps(options.baseUrl));
+    options.baseUrl = `${url.protocol}//${url.host}`;
+  } catch (err) {
+    console.error(chalk.red("Error parsing baseUrl:"));
+    console.error("  ", chalk.red((err as Error).message));
+
+    return;
+  }
 
   logOptions(options);
 

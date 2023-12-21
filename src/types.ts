@@ -43,7 +43,7 @@ export interface GetComicsOptions {
    * @example
    *
    * ```sh
-   * "https://getcomics.info/other-comics/gideon-falls-deluxe-edition-book-1-the-legend-of-the-black-barn-2021/"
+   * "https://getcomics.org/other-comics/gideon-falls-deluxe-edition-book-1-the-legend-of-the-black-barn-2021/"
    * ```
    */
   url?: string;
@@ -85,6 +85,13 @@ export interface GetComicsOptions {
    * Convert any downloaded .cbr files to .cbz
    */
   cbz?: boolean;
+
+  /**
+   * The base getcomics URL to use for downloading comics.
+   *
+   * @defaultValue `"https://getcomics.org"`
+   */
+  baseUrl: string;
 }
 
 export interface ComicLink {

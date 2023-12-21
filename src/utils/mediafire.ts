@@ -17,8 +17,7 @@ async function checkLinkResponseType(link: string) {
 }
 
 export async function getMediafireLink(link: string) {
-  const validLink =
-    /^(http|https):\/\/(?:www\.)?(mediafire)\.com\/[0-9a-z]+(\/.*)/gm;
+  const validLink = /^(http|https):\/\/(?:www\.)?(mediafire)\.com/gm;
 
   if (!link.match(validLink)) {
     throw new Error("Unknown link");

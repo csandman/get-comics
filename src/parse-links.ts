@@ -12,7 +12,7 @@ import type { CheerioAPI } from "cheerio";
 /**
  * Parse a comic page that only has a single comic to download
  *
- * @see {@link https://getcomics.info/dc/dark-knights-of-steel-6-2022/}
+ * @see {@link https://getcomics.org/dc/dark-knights-of-steel-6-2022/}
  *
  * @param page - The cheerio page to parse
  * @param url - The comic page's URL
@@ -58,7 +58,7 @@ export function parseSingleComicPage(
 /**
  * Parse a comic page with multiple comics to download
  *
- * @see {@link https://getcomics.info/other-comics/the-walking-dead-vol-1-24-tpb-extras-ultimate-collection/ }
+ * @see {@link https://getcomics.org/other-comics/the-walking-dead-vol-1-24-tpb-extras-ultimate-collection/ }
  *
  * @param page - The cheerio page to parse
  * @param url - The comic page's URL
@@ -159,7 +159,7 @@ export function parseMultiComicPage(
  * Parse a comic page that is formatted the same as a page with a single comic
  * download but actually has multiple
  *
- * @see {@link https://getcomics.info/other-comics/uncle-scrooge-1-404-complete/}
+ * @see {@link https://getcomics.org/other-comics/uncle-scrooge-1-404-complete/}
  *
  * @param page - The cheerio page to parse
  * @param url - The comic page's URL
@@ -176,7 +176,7 @@ export function parseMultiSingleComicPage(
 
   const mainDownloadAnchors = page('a[title="Download Now"]');
 
-  mainDownloadAnchors.each((anchorI, anchorEl) => {
+  mainDownloadAnchors.each((_, anchorEl) => {
     const anchor = page(anchorEl);
 
     const main = anchor.attr("href");
@@ -299,7 +299,10 @@ export async function parseIndexPage(url: string, links: ComicLink[]) {
   return hasNextPage;
 }
 
-function getRedirectedLinks(links: ComicLink[]): Promise<ComicLink[]> {
+function getRedirectedLinks(
+  links: ComicLink[],
+  baseUrl: string
+): Promise<ComicLink[]> {
   return Promise.all(
     links.map(
       async ({
@@ -320,26 +323,38 @@ function getRedirectedLinks(links: ComicLink[]): Promise<ComicLink[]> {
         title,
         pageUrl,
         links: {
-          ...(main && { main: await getRedirectLocation(main) }),
-          ...(mirror && { mirror: await getRedirectLocation(mirror) }),
-          ...(mega && { mega: await getRedirectLocation(mega) }),
-          ...(mediafire && { mediafire: await getRedirectLocation(mediafire) }),
-          ...(zippyshare && {
-            zippyshare: await getRedirectLocation(zippyshare),
+          ...(main && {
+            main: await getRedirectLocation(main, baseUrl),
           }),
-          ...(dropapk && { dropapk: await getRedirectLocation(dropapk) }),
-          ...(ufile && { ufile: await getRedirectLocation(ufile) }),
-          ...(cloudmail && { cloudmail: await getRedirectLocation(cloudmail) }),
+          ...(mirror && {
+            mirror: await getRedirectLocation(mirror, baseUrl),
+          }),
+          ...(mega && {
+            mega: await getRedirectLocation(mega, baseUrl),
+          }),
+          ...(mediafire && {
+            mediafire: await getRedirectLocation(mediafire, baseUrl),
+          }),
+          ...(zippyshare && {
+            zippyshare: await getRedirectLocation(zippyshare, baseUrl),
+          }),
+          ...(dropapk && {
+            dropapk: await getRedirectLocation(dropapk, baseUrl),
+          }),
+          ...(ufile && {
+            ufile: await getRedirectLocation(ufile, baseUrl),
+          }),
+          ...(cloudmail && {
+            cloudmail: await getRedirectLocation(cloudmail, baseUrl),
+          }),
           ...(userscloud && {
-            userscloud: await getRedirectLocation(userscloud),
+            userscloud: await getRedirectLocation(userscloud, baseUrl),
           }),
         },
       })
     )
   );
 }
-
-const BASE_URL = "https://getcomics.info";
 
 export async function parseAllLinks(
   options: GetComicsOptions
@@ -349,6 +364,8 @@ export async function parseAllLinks(
     chalk.bold("Finding All Download Links"),
     "\n\n------------------------------------------------------------------------------\n"
   );
+
+  const { baseUrl } = options;
 
   const links: ComicLink[] = [];
 
@@ -361,7 +378,7 @@ export async function parseAllLinks(
       );
     }
 
-    if (!/https:\/\/getcomics\.info/.test(url)) {
+    if (!url.includes(baseUrl)) {
       throw new Error(
         `The value "${options.url}" passed for 'url' is not a valid GetComics URL.`
       );
@@ -369,11 +386,12 @@ export async function parseAllLinks(
 
     await parseDownloadLinks(url, links);
   } else {
-    let baseUrl = BASE_URL;
+    let searchUrl = baseUrl;
+
     if (options.tag) {
-      baseUrl = `${baseUrl}/tag/${options.tag}`;
+      searchUrl = `${searchUrl}/tag/${options.tag}`;
     } else if (options.category) {
-      baseUrl = `${baseUrl}/cat/${options.category}`;
+      searchUrl = `${searchUrl}/cat/${options.category}`;
     }
 
     let queryStr = "";
@@ -390,14 +408,14 @@ export async function parseAllLinks(
     ) {
       const indexUrl =
         currPage === 0
-          ? `${baseUrl}${queryStr}`
-          : `${baseUrl}/page/${currPage}${queryStr}`;
+          ? `${searchUrl}${queryStr}`
+          : `${searchUrl}/page/${currPage}${queryStr}`;
       hasNextPage = await parseIndexPage(indexUrl, links);
       currPage += 1;
     }
   }
 
-  const fullRedirectedLinks = await getRedirectedLinks(links);
+  const fullRedirectedLinks = await getRedirectedLinks(links, options.baseUrl);
 
   return fullRedirectedLinks;
 }

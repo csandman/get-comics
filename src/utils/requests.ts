@@ -2,8 +2,8 @@ import { URL } from "url";
 import fetch from "node-fetch";
 import type { Response } from "node-fetch";
 
-export async function getRedirectLocation(url: string) {
-  if (url.startsWith("https://getcomics.info/links.php")) {
+export async function getRedirectLocation(url: string, baseUrl: string) {
+  if (url.startsWith(`${baseUrl}/links`)) {
     const redirectRes = await fetch(url, {
       method: "HEAD",
       redirect: "manual",
