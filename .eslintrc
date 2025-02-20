@@ -57,6 +57,12 @@
       "rules": {
         "import/extensions": ["error", "always"]
       }
+    },
+    {
+      "files": ["src/neural-hash/seed.js"],
+      "rules": {
+        "@typescript-eslint/no-loss-of-precision": "off"
+      }
     }
   ]
 }

@@ -3,7 +3,7 @@ import chalk from "chalk";
 import rimraf from "rimraf";
 import convertToCbz from "./convert-to-cbz";
 import downloadComic from "./download-comic";
-import { extractZip } from "./utils/archive";
+import { extractLastImageFromZip, extractZip } from "./utils/archive";
 import {
   styledGetComics,
   styledMediaFire,
@@ -141,7 +141,7 @@ async function downloadAllComics(
         }
       }
 
-      // Convert all comics in zip to CBZ
+      // Convert all comics to CBZ
       if (options.cbz) {
         for (let j = 0; j < filePaths.length; j += 1) {
           const filePath = filePaths[j];
@@ -152,6 +152,13 @@ async function downloadAllComics(
           }
         }
       }
+
+      await Promise.all(
+        filePaths.map((filePath) => {
+          console.log("\nExtracting last image from comic archives");
+          return extractLastImageFromZip(filePath, "last-images");
+        })
+      );
     } else {
       console.warn(
         "No downloads succeeded for comic:",

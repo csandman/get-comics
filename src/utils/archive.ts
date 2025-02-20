@@ -71,6 +71,84 @@ export const extractZip = async (
   });
 };
 
+export const extractLastImageFromZip = async (
+  filePath: string,
+  outputPath: string
+): Promise<string> => {
+  await mkdirp(outputPath);
+
+  let lastImage: { fileName: string; entry: Entry } | null = null;
+
+  return new Promise<string>((resolve, reject) => {
+    yauzl.open(filePath, { lazyEntries: true }, (openErr, zipfile) => {
+      if (openErr) {
+        reject(openErr);
+      }
+
+      zipfile.readEntry();
+
+      zipfile.on("entry", (entry: Entry) => {
+        if (/\/$/.test(entry.fileName)) {
+          // Directory file names end with '/'.
+          // Note that entires for directories themselves are optional.
+          // An entry's fileName implicitly requires its parent directories to exist.
+          zipfile.readEntry();
+        } else {
+          const baseFileName = path.parse(entry.fileName).base;
+
+          if (!lastImage) {
+            lastImage = { fileName: baseFileName, entry };
+          } else if (baseFileName.localeCompare(lastImage.fileName) > 0) {
+            lastImage = { fileName: baseFileName, entry };
+          }
+
+          zipfile.readEntry();
+        }
+      });
+
+      zipfile.on("end", () => {
+        const { fileName: baseFileName, entry: lastImageEntry } =
+          lastImage || {};
+        if (!baseFileName || !lastImageEntry) {
+          throw new Error("No images found in zip file");
+        } else {
+          zipfile.openReadStream(
+            lastImageEntry,
+            async (readErr, readStream) => {
+              if (readErr) {
+                throw readErr;
+              }
+
+              readStream.on("end", () => {
+                zipfile.readEntry();
+              });
+
+              console.log("Extracting file:", baseFileName);
+
+              const outputFilePath = path.join(outputPath, baseFileName);
+              const outputFileDir = path.parse(outputFilePath).dir;
+              await mkdirp(outputFileDir);
+
+              const fileStream = createWriteStream(outputFilePath);
+
+              fileStream.on("finish", () => {
+                resolve(outputFilePath);
+              });
+
+              readStream.pipe(fileStream);
+            }
+          );
+        }
+      });
+
+      zipfile.on("error", (zipErr: Error) => {
+        zipfile.close();
+        reject(zipErr);
+      });
+    });
+  });
+};
+
 export const extractRar = async (filePath: string, outputPath: string) => {
   await mkdirp(outputPath);
 
