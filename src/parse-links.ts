@@ -23,7 +23,7 @@ export function parseSingleComicPage(
   url: string,
   links: ComicLink[]
 ) {
-  const mainDownloadLink = page('a[title="Download Now"]').attr("href");
+  const mainDownloadLink = page('a[title="Download Now" i]').attr("href");
 
   const title = page("h1").first().text().trim();
 
@@ -174,7 +174,7 @@ export function parseMultiSingleComicPage(
 
   page("p:empty").remove();
 
-  const mainDownloadAnchors = page('a[title="Download Now"]');
+  const mainDownloadAnchors = page('a[title="Download Now" i]');
 
   mainDownloadAnchors.each((_, anchorEl) => {
     const anchor = page(anchorEl);
@@ -239,7 +239,7 @@ export async function parseDownloadLinks(url: string, links: ComicLink[]) {
   const page = await loadPage(url);
 
   // TODO: This part assumes that all single comic download pages have a main server download link which might not always be true
-  const mainDownloadAnchors = page('a[title="Download Now"]');
+  const mainDownloadAnchors = page('a[title="Download Now" i]');
   const mainDownloadLink = mainDownloadAnchors.attr("href");
 
   // This will be true when the page is structured to have only one comic to download
