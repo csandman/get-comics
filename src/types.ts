@@ -155,5 +155,13 @@ export interface ComicLink {
      * Automatic downloading from this type of link is supported
      */
     userscloud?: string;
+    /**
+     * A download link from 1024tera.com
+     */
+    terabox?: string;
+    /**
+     * A download link from pixeldrain.com
+     */
+    pixeldrain?: string;
   };
 }

@@ -41,6 +41,7 @@
     "node-fetch": "^3.2.3",
     "node-unrar-js": "^2.0.2",
     "pretty-bytes": "^6.0.0",
+    "puppeteer": "^24.2.1",
     "rimraf": "^3.0.2",
     "yauzl": "^2.10.0",
     "zs-extract": "^1.4.1"

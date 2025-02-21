@@ -38,7 +38,7 @@ export async function urlExists(url: string): Promise<boolean> {
   try {
     const resp = await fetch(url, { method: "HEAD" });
 
-    return resp.ok;
+    return resp.status !== 404;
   } catch (err) {
     return false;
   }

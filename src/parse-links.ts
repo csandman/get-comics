@@ -35,6 +35,8 @@ export function parseSingleComicPage(
   const dropapk = page('a[title*="DropAPK" i]').attr("href");
   const cloudmail = page('a[title*="CloudMail" i]').attr("href");
   const userscloud = page('a[title*="Userscloud" i]').attr("href");
+  const terabox = page('a[title*="Terabox" i]').attr("href");
+  const pixeldrain = page('a[title*="Pixeldrain" i]').attr("href");
 
   const newDownload: ComicLink = {
     title,
@@ -49,6 +51,8 @@ export function parseSingleComicPage(
       ...(ufile && { ufile }),
       ...(cloudmail && { cloudmail }),
       ...(userscloud && { userscloud }),
+      ...(terabox && { terabox }),
+      ...(pixeldrain && { pixeldrain }),
     },
   };
 
@@ -90,6 +94,8 @@ export function parseMultiComicPage(
     let ufile = "";
     let cloudmail = "";
     let userscloud = "";
+    let terabox = "";
+    let pixeldrain = "";
 
     page("a", li).each((ii, anchorSel) => {
       const anchor = page(anchorSel);
@@ -118,6 +124,10 @@ export function parseMultiComicPage(
         cloudmail = downloadUrl;
       } else if (anchorText.includes("userscloud")) {
         userscloud = downloadUrl;
+      } else if (anchorText.includes("terabox")) {
+        terabox = downloadUrl;
+      } else if (anchorText.includes("pixeldrain")) {
+        pixeldrain = downloadUrl;
       }
     });
 
@@ -130,7 +140,9 @@ export function parseMultiComicPage(
       dropapk,
       ufile,
       cloudmail,
-      userscloud
+      userscloud,
+      terabox,
+      pixeldrain
     );
 
     if (hasDownloadLink) {
@@ -147,6 +159,8 @@ export function parseMultiComicPage(
           ...(ufile && { ufile }),
           ...(cloudmail && { cloudmail }),
           ...(userscloud && { userscloud }),
+          ...(terabox && { terabox }),
+          ...(pixeldrain && { pixeldrain }),
         },
       };
 
@@ -223,6 +237,10 @@ export function parseMultiSingleComicPage(
           comicLink.links.cloudmail = downloadUrl;
         } else if (linkTitle.includes("userscloud")) {
           comicLink.links.userscloud = downloadUrl;
+        } else if (linkTitle.includes("terabox")) {
+          comicLink.links.terabox = downloadUrl;
+        } else if (linkTitle.includes("pixeldrain")) {
+          comicLink.links.pixeldrain = downloadUrl;
         }
       } else {
         nextElementIsButton = false;
@@ -236,9 +254,10 @@ export function parseMultiSingleComicPage(
 export async function parseDownloadLinks(url: string, links: ComicLink[]) {
   console.log("    Parsing download links from comic page at URL:", url);
 
+  const originalLinksLength = links.length;
   const page = await loadPage(url);
 
-  // TODO: This part assumes that all single comic download pages have a main server download link which might not always be true
+  // TODO: This part assumes that all single comic download pages have a main server download link which is not always true
   const mainDownloadAnchors = page('a[title="Download Now" i]');
   const mainDownloadLink = mainDownloadAnchors.attr("href");
 
@@ -252,6 +271,8 @@ export async function parseDownloadLinks(url: string, links: ComicLink[]) {
   } else {
     parseMultiComicPage(page, url, links);
   }
+
+  console.log(`      ${links.length - originalLinksLength} new link(s) found`);
 }
 
 export async function parseWeekPage(url: string, links: ComicLink[]) {
@@ -279,6 +300,7 @@ export async function parseIndexPage(url: string, links: ComicLink[]) {
 
   page("h1.post-title a").each((i, comicPageLinkSel) => {
     const comicPageLink = page(comicPageLinkSel);
+    console.log("comic page link", comicPageLink.attr("href"));
     comicPageUrls.push(comicPageLink.attr("href") as string);
   });
 
@@ -299,10 +321,7 @@ export async function parseIndexPage(url: string, links: ComicLink[]) {
   return hasNextPage;
 }
 
-function getRedirectedLinks(
-  links: ComicLink[],
-  baseUrl: string
-): Promise<ComicLink[]> {
+function getRedirectedLinks(links: ComicLink[]): Promise<ComicLink[]> {
   return Promise.all(
     links.map(
       async ({
@@ -318,37 +337,45 @@ function getRedirectedLinks(
           ufile,
           cloudmail,
           userscloud,
+          terabox,
+          pixeldrain,
         },
       }) => ({
         title,
         pageUrl,
         links: {
           ...(main && {
-            main: await getRedirectLocation(main, baseUrl),
+            main: await getRedirectLocation(main),
           }),
           ...(mirror && {
-            mirror: await getRedirectLocation(mirror, baseUrl),
+            mirror: await getRedirectLocation(mirror),
           }),
           ...(mega && {
-            mega: await getRedirectLocation(mega, baseUrl),
+            mega: await getRedirectLocation(mega),
           }),
           ...(mediafire && {
-            mediafire: await getRedirectLocation(mediafire, baseUrl),
+            mediafire: await getRedirectLocation(mediafire),
           }),
           ...(zippyshare && {
-            zippyshare: await getRedirectLocation(zippyshare, baseUrl),
+            zippyshare: await getRedirectLocation(zippyshare),
           }),
           ...(dropapk && {
-            dropapk: await getRedirectLocation(dropapk, baseUrl),
+            dropapk: await getRedirectLocation(dropapk),
           }),
           ...(ufile && {
-            ufile: await getRedirectLocation(ufile, baseUrl),
+            ufile: await getRedirectLocation(ufile),
           }),
           ...(cloudmail && {
-            cloudmail: await getRedirectLocation(cloudmail, baseUrl),
+            cloudmail: await getRedirectLocation(cloudmail),
           }),
           ...(userscloud && {
-            userscloud: await getRedirectLocation(userscloud, baseUrl),
+            userscloud: await getRedirectLocation(userscloud),
+          }),
+          ...(terabox && {
+            terabox: await getRedirectLocation(terabox),
+          }),
+          ...(pixeldrain && {
+            pixeldrain: await getRedirectLocation(pixeldrain),
           }),
         },
       })
@@ -415,7 +442,7 @@ export async function parseAllLinks(
     }
   }
 
-  const fullRedirectedLinks = await getRedirectedLinks(links, options.baseUrl);
+  const fullRedirectedLinks = await getRedirectedLinks(links);
 
   return fullRedirectedLinks;
 }
